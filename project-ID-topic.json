@@ -1,0 +1,280 @@
+{
+    "Basic Biological and Medical Research": [
+        {
+            "project ID": "rwth0596",
+            "title": "Molecular Dynamics study of mutant IDH1 for in silico drug design against neurological diseases"
+        },
+        {
+            "project ID": "jara0177",
+            "title": "Molecular dynamics of the SLC26 family of ion channels and transporters"
+        },
+        {
+            "project ID": "rwth0399",
+            "title": "The Mechanics of Brain Folding"
+        },
+        {
+            "project ID": "rwth0565",
+            "title": "Understanding the Effect of Guanidinylation of Human YB-1 Protein on Its Interactions with the NOTCH-3 Receptor"
+        },
+        {
+            "project ID": "jara0203",
+            "title": "Improved Diagnostics of Respiratory Flows Using a Lattice-Boltzmann Method and Machine Learning Techniques"
+        },
+        {
+            "project ID": "rwth0605",
+            "title": "Impact of pH and voltage in Mice HCN channel’s gating: mechanistic insights from metadynamics simulations"
+        },
+        {
+            "project ID": "jara0180",
+            "title": "Molecular dynamics simulations of P2X receptors"
+        }
+    ],
+    "Molecular Chemistry": [
+        {
+            "project ID": "rwth0635",
+            "title": "In silico design and development of green catalysts for polymerization reactions - ab initio molecular dynamics (AIMD) simulations in condensed phase"
+        },
+        {
+            "project ID": "jara0091",
+            "title": "Computational studies of reactivities in organic and organometallic transformations"
+        },
+        {
+            "project ID": "rwth0636",
+            "title": "Exploring the synergistic power of bimetallic metal catalysts for selective bond manipulations and value-adding transformations: a combined experimental & computational approach"
+        },
+        {
+            "project ID": "rwth0609",
+            "title": "Computational evaluation and catalyst screening of the electrocatalytic reduction of CO2 with low valent rhodium complexes"
+        },
+        {
+            "project ID": "rwth0698",
+            "title": "Computational evaluation and catalyst screening of the catalytic reduction of CO2 to methanol via an indirect formate ester route with manganese complexes"
+        }
+    ],
+    "Chemical Solid State and Surface Research": [
+        {
+            "project ID": "jara0156",
+            "title": "Ab-initio study of composition, structure and conductivity in interstitial oxygen conductors"
+        },
+        {
+            "project ID": "rwth0445",
+            "title": "Ionic conductivity of NASICON materials from first principles"
+        },
+        {
+            "project ID": "rwth0518",
+            "title": "Understanding the aggregation of sickle hemoglobin and identification of aggregation inhibitors"
+        },
+        {
+            "project ID": "rwth0526",
+            "title": "Analyzing the Polaron Migration Mechanism"
+        },
+        {
+            "project ID": "rwth0577",
+            "title": "Mechanistic Investigations of the Direct Decomposition of Nitric Oxide on Platinum-Doped Graphene Model Surfaces"
+        },
+        {
+            "project ID": "rwth0656",
+            "title": "Computational studies of field-dependent oxygen migration in crystalline and amorphous fluorite structured oxides"
+        },
+        {
+            "project ID": "rwth0725",
+            "title": "Investigating structural and chemical differences of the SARS-CoV-2 Mpro binding site before and after covalent bond formation with ligands: enabling efficient and accurate virtual screening campaigns."
+        },
+        {
+            "project ID": "rwth0542",
+            "title": "Investigation of the surface of the cathode material LiCoO2"
+        },
+        {
+            "project ID": "jara0033",
+            "title": "Quantum chemistry of functional chalcogenides for phase-change memories and other applications"
+        }
+    ],
+    "Condensed Matter Physics": [
+        {
+            "project ID": "jara0213",
+            "title": "Understanding spin-orbital physics in correlated systems"
+        },
+        {
+            "project ID": "jara0191",
+            "title": "Materials for topological quantum computing from first principles"
+        },
+        {
+            "project ID": "jara0210",
+            "title": "Ab-initio study of defects in phase-change materials"
+        },
+        {
+            "project ID": "jara0216",
+            "title": "Novel Quantum Monte Carlo Approches to Competing Orders in Quantum Magnets"
+        },
+        {
+            "project ID": "rwth0662",
+            "title": "Novel Materials by Design: The Treasure Map Approach"
+        }
+    ],
+    "Particles, Nuclei and Fields": [
+        {
+            "project ID": "rwth0414",
+            "title": "Higher order QCD predictions for top quark physics at the LHC"
+        },
+        {
+            "project ID": "rwth0572",
+            "title": "Development of a Nuclear Archaeology Toolbox"
+        },
+        {
+            "project ID": "jara0015",
+            "title": "Nuclear Lattice Simulations"
+        },
+        {
+            "project ID": "jara0184",
+            "title": "Dark Simulations: Understanding the Dark Side of Particle Physics and Cosmology"
+        },
+        {
+            "project ID": "rwth0583",
+            "title": "Deep Learning for the MADMAX Dark Matter Experiment"
+        },
+        {
+            "project ID": "rwth0619",
+            "title": "Computing for the CMS experiment at the CERN LHC: extension of HEP big data analysis concepts to include HPC center resources"
+        }
+    ],
+    "Natural Sciences - Statistical Physics, Soft Matter, Biological Physics, Nonlinear Dynamics": [
+        {
+            "project ID": "bund0007",
+            "title": "Microgels at the interfaces"
+        },
+        {
+            "project ID": "rwth0623",
+            "title": "Structure-based drug design for the human NEET proteins: a novel target for progressive neurological diseases."
+        },
+        {
+            "project ID": "rwth0637",
+            "title": "Metadynamics-based design of ligands targeting COVID-19 3CLPRO main protease with high potency and increased residence time"
+        }
+    ],
+    "Statistical Physics, Soft Matter, Biological Physics, Nonlinear Dynamics": [
+        {
+            "project ID": "jara0214",
+            "title": "Ab-initio study of the inherent structures and the configurational entropy of liquid phase-change materials"
+        },
+        {
+            "project ID": "rwth0475",
+            "title": "Tissue Growth and Evolution"
+        }
+    ],
+    "Astronomy and Astrophysics": [
+        {
+            "project ID": "jara0052",
+            "title": "Cosmic-ray Physics with the AMS Experiment on the International Space Station"
+        }
+    ],
+    "Mechanics": [
+        {
+            "project ID": "jara0217",
+            "title": "Investigation of the 3D instationary flow in linear turbine cascade using scale resolving simulations"
+        },
+        {
+            "project ID": "rwth0555",
+            "title": "Investigation of the flow in a linear high pressure compressor cascade using scale resolving Simulations"
+        },
+        {
+            "project ID": "rwth0625",
+            "title": "Phase field topology optimization to increase fracture toughness of thin shell structures"
+        }
+    ],
+    "Heat Energy Technology, Thermal Machines, Fluid Mechanics": [
+        {
+            "project ID": "rwth0642",
+            "title": "Investigation of the tip clearance flow in a linear compressor cascade using sale resolving simulations"
+        },
+        {
+            "project ID": "bund0012",
+            "title": "Development of efficient numerical methods to quantitatively predict erosion rates - QUAVER"
+        },
+        {
+            "project ID": "jara0185",
+            "title": "Parallel Stabilized Finite Element Methods for Non-Newtonian Flows and Fluid Structure Interaction Problems"
+        },
+        {
+            "project ID": "jara0225",
+            "title": "Numerical analysis of wind-induced pressure fluctuations on open volumetric receivers in solar power tower plants (SPTP)"
+        },
+        {
+            "project ID": "rwth0553",
+            "title": "3D-CFD Simulation for Design Optimization of Fuel Cell Radial Compressor Stages"
+        },
+        {
+            "project ID": "rwth0612",
+            "title": "Aerodynamic integration of an electro-hybrid powertrain for the silent air taxi"
+        },
+        {
+            "project ID": "jara0222",
+            "title": "Aerodynamic, Aeroelastic and Aeroacoustic Optimization of the Silent Air Taxi Ducted Fan"
+        },
+        {
+            "project ID": "rwth0602",
+            "title": "Project LONGRUN: Development of efficient and environmentally friendly LONG distance poweRtrain for heavy dUty trucks aNd coaches"
+        },
+        {
+            "project ID": "rwth0626",
+            "title": "Joint project of VKA and ITV within the scope of the “Fuel Science Center”: “Investigation of low temperature combustion chemistry within a novel integrated kinetic model development framework” (ITV) and “Flame-and spray-wall interactions influence on unburned hydrocarbons and carbon monoxide emissions” (VKA)"
+        },
+        {
+            "project ID": "rwth0621",
+            "title": "Soot Formation in Oxymethylene Ether Fuel Blends"
+        },
+        {
+            "project ID": "rwth0644",
+            "title": "Large Eddy Simulation of Knocking Combustion in Spark Ignition Engines"
+        },
+        {
+            "project ID": "rwth0658",
+            "title": "Development of a super-resolution generative adversarial network with physics-based loss function in the context of turbulent reacting flows"
+        },
+        {
+            "project ID": "bund0013",
+            "title": "Gas-liquid flow delivery with centrifugal pumps Development of a validated and efficient simulation method to extend the operating range of centrifugal pumps for handling gas-laden liquids."
+        },
+        {
+            "project ID": "rwth0670",
+            "title": "SBES of an eccentrically mounted variable stator vane"
+        }
+    ],
+    "Materials in Sintering Processes and Generative Manufacturing Processes": [
+        {
+            "project ID": "jara0201",
+            "title": "Mechanical Properties of Nanocomposites of Silica and Graphene Aerogels: An All-atom Simulation Study"
+        }
+    ],
+    "Materials Science": [
+        {
+            "project ID": "jara0131",
+            "title": "Quantum mechanically guided materials design"
+        },
+        {
+            "project ID": "jara0151",
+            "title": "Quantum mechanically guided design of wear-protective coatings for polymer forming tools"
+        },
+        {
+            "project ID": "jara0221",
+            "title": "Quantum-mechanical investigations of phase stability and thermal conductivity in MAX phases and compositionally complex oxides"
+        },
+        {
+            "project ID": "rwth0591",
+            "title": "Atomistic simulations of plasticity in complex crystals"
+        }
+    ],
+    "Computer Science": [
+        {
+            "project ID": "rwth0438",
+            "title": "Privacy-Preserving Machine Learning for Intrusion Detection"
+        },
+        {
+            "project ID": "rwth0213",
+            "title": "CFD Simulations Ecurie Aix"
+        },
+        {
+            "project ID": "rwth0663",
+            "title": "Investigation of the SPEChpc 2021 Benchmark Suites"
+        }
+    ]
+}

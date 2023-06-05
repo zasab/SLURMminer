@@ -1,0 +1,5 @@
+*.csv
+slurm-log/
+models/
+*.txt
+*/__pycache__/*

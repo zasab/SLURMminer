@@ -1,0 +1,185 @@
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@500&display=swap");
+
+body {
+  background-color: #f8f9fa !important;
+}
+
+#app {
+  font-family: "Fredoka", sans-serif !important;
+}
+
+
+input {
+  margin: 2px !important;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  border: 1px solid lightgray !important;
+  border-radius: 5px !important;
+  color: gray !important
+}
+
+/* body.login-bg {background-color:rgba(218, 235, 255, 0.459)} */
+
+.table {
+  border-color: white !important;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-collapse: separate !important;
+  border-spacing: 0 6px !important;
+}
+
+.card,
+.modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  word-wrap: break-word;
+  background-color: #fff;
+  background-clip: border-box;
+  border: 1px solid rgba(0, 0, 0, .125);
+  border-radius: 1rem !important;
+}
+
+/* LoginForm Css Style*/
+.form-label-custom {
+  color: #0d6efd !important;
+}
+
+.form-inputs {
+  position: relative;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.form-inputs i {
+  position: absolute;
+  top: 48%;
+  left: 15px;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
+  color: #0d6efd;
+  font-size: 20px;
+  cursor: pointer
+}
+
+.form-inputs .input-icon {
+  position: absolute;
+  top: 48%;
+  right: 50px;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
+  color: gray;
+  font-size: 20px;
+}
+
+.form-inputs input {
+  padding-left: 45px;
+  padding-top: 5px;
+  width: 100%;
+  padding-bottom: 5px;
+  background-color: white;
+  border: 1px solid #0d6efd;
+  border-radius: 3px;
+  color: #0d6efd;
+}
+
+
+
+/* Pagination Css Style*/
+.border-custom-runworkflow {
+  border: 1px solid lightgray;
+  background-color: #d3d3d326;
+  border-radius: 5px;
+  font-size: 16px;
+  color: gray
+}
+
+.border-custom-gray {
+  border: 1px solid lightgray;
+  background-color: white;
+  border-radius: 5px;
+  font-size: 16px;
+  color: gray
+}
+
+/* InputRunWorkFlow Css Style*/
+[type=file] {
+  height: 0;
+  overflow: hidden;
+  width: 0;
+}
+
+[type=file]+label {
+  background: #0d6efd;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-block;
+  padding: 5px 8px
+}
+
+[type=file]+label:hover {
+  background-color: #0d6efd
+}
+
+/* InputRunWorkFlow Css Style*/
+
+
+.navbar .megamenu {
+  padding: 1rem;
+}
+
+@media all and (min-width: 992px) {
+  .navbar .has-megamenu {
+    position: static !important;
+  }
+
+  .navbar .megamenu {
+    left: 0;
+    right: 0;
+    width: 100%;
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 991px) {
+
+  .navbar.fixed-top .navbar-collapse,
+  .navbar.sticky-top .navbar-collapse {
+    overflow-y: auto;
+    max-height: 90vh;
+    margin-top: 10px;
+  }
+}
+
+
+.file-wrapper {
+  text-align: center;
+  width: 300px;
+  height: 2em;
+  vertical-align: middle;
+  display: table-cell;
+  position: relative;
+  overflow: hidden;
+  background: white;
+  /* border:1px solid gray; */
+  color: gray
+}
+
+
+.file-wrapper input {
+  position: absolute;
+  top: 0;
+  right: 0;
+  cursor: pointer;
+  opacity: 0.0;
+  filter: alpha(opacity=0);
+  font-size: 300px;
+  height: 200px;
+}
