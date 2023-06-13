@@ -14,7 +14,7 @@
 
 ### Execution Procedure
 
-1. Run the "app.py" script and employ the "pip install" command to install all the required packages. You can find a list of some package requirements in the requirements.txt file.
+1. Run the "app.py" script and employ the "pip install" command to install all the required packages. You can find a list of some package requirements in the requirements.txt file. Just run (*pip install pm4py==2.3.3 flask flask_api flask_cors hurry.filesize seaborn plotly pysftp paramiko pandas==1.5.3 networkx humanfriendly*) to install all requirements.
 2. Within the "DEV-front" directory, execute the commands "npm install" and "npm run dev" (Node.js is required).
    - Open the URL indicated as "⇒ Local:" in your web browser to access the application.
 
