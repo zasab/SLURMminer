@@ -116,7 +116,8 @@ def SLURM_base_connected_components2(dataframe):
     conn_dict = {}
     for i in range(len(conn)):
         for el in conn[i]:
-            conn_dict[int(el)] = str(i)
+            int_value = int(el.split('.')[0])
+            conn_dict[int_value] = str(i)
             
     dataframe["DEPENDENCY-BASED-CASE-ID"] = dataframe["JOBID"].map(conn_dict).fillna(dataframe["JOBID"])
 

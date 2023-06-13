@@ -1,10 +1,12 @@
-pm4py
-Flask
-Flask-API
-Flask-CORS
+pm4py==2.3.3
+flask
+flask_api
+flask_cors
 hurry.filesize
 seaborn
 plotly
 pysftp
 paramiko
 pandas==1.5.3
+networkx
+humanfriendly
