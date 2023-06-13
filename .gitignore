@@ -1,5 +1,5 @@
-*.csv
+test.py
 slurm-log/
 models/
-*.txt
+credentials.txt
 */__pycache__/*

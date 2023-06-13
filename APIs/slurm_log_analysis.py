@@ -315,11 +315,9 @@ def get_project_id_topics():
         data = create_data(request)
         print()
         print("data: ", data)
-        dfpre.project_ID_topic_prep(config.logger.project_ID_topic_json)
         if not os.path.exists(config.logger.project_ID_topic):
             return response_json({"error":  messages["start_logging"]}, status.HTTP_406_NOT_ACCEPTABLE)
-        df = pd.read_csv(config.logger.project_ID_topic, sep=SEP, error_bad_lines=False)
-        project_ID_topic_df = dfpre.project_ID_topic_prep(config.logger.project_ID_topic_json)
+        project_ID_topic_df = pd.read_csv(config.logger.project_ID_topic, sep='\t', error_bad_lines=False)
 
         return response_json({
             "msg":  messages["success"],

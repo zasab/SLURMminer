@@ -1,0 +1,64 @@
+topic	project ID	title
+Basic Biological and Medical Research	rwth0596	Molecular Dynamics study of mutant IDH1 for in silico drug design against neurological diseases
+Basic Biological and Medical Research	jara0177	Molecular dynamics of the SLC26 family of ion channels and transporters
+Basic Biological and Medical Research	rwth0399	The Mechanics of Brain Folding
+Basic Biological and Medical Research	rwth0565	Understanding the Effect of Guanidinylation of Human YB-1 Protein on Its Interactions with the NOTCH-3 Receptor
+Basic Biological and Medical Research	jara0203	Improved Diagnostics of Respiratory Flows Using a Lattice-Boltzmann Method and Machine Learning Techniques
+Basic Biological and Medical Research	rwth0605	Impact of pH and voltage in Mice HCN channel’s gating: mechanistic insights from metadynamics simulations
+Basic Biological and Medical Research	jara0180	Molecular dynamics simulations of P2X receptors
+Molecular Chemistry	rwth0635	In silico design and development of green catalysts for polymerization reactions - ab initio molecular dynamics (AIMD) simulations in condensed phase
+Molecular Chemistry	jara0091	Computational studies of reactivities in organic and organometallic transformations
+Molecular Chemistry	rwth0636	Exploring the synergistic power of bimetallic metal catalysts for selective bond manipulations and value-adding transformations: a combined experimental & computational approach
+Molecular Chemistry	rwth0609	Computational evaluation and catalyst screening of the electrocatalytic reduction of CO2 with low valent rhodium complexes
+Molecular Chemistry	rwth0698	Computational evaluation and catalyst screening of the catalytic reduction of CO2 to methanol via an indirect formate ester route with manganese complexes
+Chemical Solid State and Surface Research	jara0156	Ab-initio study of composition, structure and conductivity in interstitial oxygen conductors
+Chemical Solid State and Surface Research	rwth0445	Ionic conductivity of NASICON materials from first principles
+Chemical Solid State and Surface Research	rwth0518	Understanding the aggregation of sickle hemoglobin and identification of aggregation inhibitors
+Chemical Solid State and Surface Research	rwth0526	Analyzing the Polaron Migration Mechanism
+Chemical Solid State and Surface Research	rwth0577	Mechanistic Investigations of the Direct Decomposition of Nitric Oxide on Platinum-Doped Graphene Model Surfaces
+Chemical Solid State and Surface Research	rwth0656	Computational studies of field-dependent oxygen migration in crystalline and amorphous fluorite structured oxides
+Chemical Solid State and Surface Research	rwth0725	Investigating structural and chemical differences of the SARS-CoV-2 Mpro binding site before and after covalent bond formation with ligands: enabling efficient and accurate virtual screening campaigns.
+Chemical Solid State and Surface Research	rwth0542	Investigation of the surface of the cathode material LiCoO2
+Chemical Solid State and Surface Research	jara0033	Quantum chemistry of functional chalcogenides for phase-change memories and other applications
+Condensed Matter Physics	jara0213	Understanding spin-orbital physics in correlated systems
+Condensed Matter Physics	jara0191	Materials for topological quantum computing from first principles
+Condensed Matter Physics	jara0210	Ab-initio study of defects in phase-change materials
+Condensed Matter Physics	jara0216	Novel Quantum Monte Carlo Approches to Competing Orders in Quantum Magnets
+Condensed Matter Physics	rwth0662	Novel Materials by Design: The Treasure Map Approach
+Particles, Nuclei and Fields	rwth0414	Higher order QCD predictions for top quark physics at the LHC
+Particles, Nuclei and Fields	rwth0572	Development of a Nuclear Archaeology Toolbox
+Particles, Nuclei and Fields	jara0015	Nuclear Lattice Simulations
+Particles, Nuclei and Fields	jara0184	Dark Simulations: Understanding the Dark Side of Particle Physics and Cosmology
+Particles, Nuclei and Fields	rwth0583	Deep Learning for the MADMAX Dark Matter Experiment
+Particles, Nuclei and Fields	rwth0619	Computing for the CMS experiment at the CERN LHC: extension of HEP big data analysis concepts to include HPC center resources
+Natural Sciences - Statistical Physics, Soft Matter, Biological Physics, Nonlinear Dynamics	bund0007	Microgels at the interfaces
+Natural Sciences - Statistical Physics, Soft Matter, Biological Physics, Nonlinear Dynamics	rwth0623	Structure-based drug design for the human NEET proteins: a novel target for progressive neurological diseases.
+Natural Sciences - Statistical Physics, Soft Matter, Biological Physics, Nonlinear Dynamics	rwth0637	Metadynamics-based design of ligands targeting COVID-19 3CLPRO main protease with high potency and increased residence time
+Statistical Physics, Soft Matter, Biological Physics, Nonlinear Dynamics	jara0214	Ab-initio study of the inherent structures and the configurational entropy of liquid phase-change materials
+Statistical Physics, Soft Matter, Biological Physics, Nonlinear Dynamics	rwth0475	Tissue Growth and Evolution
+Astronomy and Astrophysics	jara0052	Cosmic-ray Physics with the AMS Experiment on the International Space Station
+Mechanics	jara0217	Investigation of the 3D instationary flow in linear turbine cascade using scale resolving simulations
+Mechanics	rwth0555	Investigation of the flow in a linear high pressure compressor cascade using scale resolving Simulations
+Mechanics	rwth0625	Phase field topology optimization to increase fracture toughness of thin shell structures
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	rwth0642	Investigation of the tip clearance flow in a linear compressor cascade using sale resolving simulations
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	bund0012	Development of efficient numerical methods to quantitatively predict erosion rates - QUAVER
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	jara0185	Parallel Stabilized Finite Element Methods for Non-Newtonian Flows and Fluid Structure Interaction Problems
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	jara0225	Numerical analysis of wind-induced pressure fluctuations on open volumetric receivers in solar power tower plants (SPTP)
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	rwth0553	3D-CFD Simulation for Design Optimization of Fuel Cell Radial Compressor Stages
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	rwth0612	Aerodynamic integration of an electro-hybrid powertrain for the silent air taxi
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	jara0222	Aerodynamic, Aeroelastic and Aeroacoustic Optimization of the Silent Air Taxi Ducted Fan
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	rwth0602	Project LONGRUN: Development of efficient and environmentally friendly LONG distance poweRtrain for heavy dUty trucks aNd coaches
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	rwth0626	Joint project of VKA and ITV within the scope of the “Fuel Science Center”: “Investigation of low temperature combustion chemistry within a novel integrated kinetic model development framework” (ITV) and “Flame-and spray-wall interactions influence on unburned hydrocarbons and carbon monoxide emissions” (VKA)
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	rwth0621	Soot Formation in Oxymethylene Ether Fuel Blends
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	rwth0644	Large Eddy Simulation of Knocking Combustion in Spark Ignition Engines
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	rwth0658	Development of a super-resolution generative adversarial network with physics-based loss function in the context of turbulent reacting flows
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	bund0013	Gas-liquid flow delivery with centrifugal pumps Development of a validated and efficient simulation method to extend the operating range of centrifugal pumps for handling gas-laden liquids.
+Heat Energy Technology, Thermal Machines, Fluid Mechanics	rwth0670	SBES of an eccentrically mounted variable stator vane
+Materials in Sintering Processes and Generative Manufacturing Processes	jara0201	Mechanical Properties of Nanocomposites of Silica and Graphene Aerogels: An All-atom Simulation Study
+Materials Science	jara0131	Quantum mechanically guided materials design
+Materials Science	jara0151	Quantum mechanically guided design of wear-protective coatings for polymer forming tools
+Materials Science	jara0221	Quantum-mechanical investigations of phase stability and thermal conductivity in MAX phases and compositionally complex oxides
+Materials Science	rwth0591	Atomistic simulations of plasticity in complex crystals
+Computer Science	rwth0438	Privacy-Preserving Machine Learning for Intrusion Detection
+Computer Science	rwth0213	CFD Simulations Ecurie Aix
+Computer Science	rwth0663	Investigation of the SPEChpc 2021 Benchmark Suites

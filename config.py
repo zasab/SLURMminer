@@ -46,4 +46,3 @@ logger.local_log = os.path.join(filedir , 'slurm-log', Config.get('LOGGER', 'loc
 logger.normal_log = os.path.join(filedir , 'slurm-log', Config.get('LOGGER', 'normal_log').strip())
 logger.ocel_log = os.path.join(filedir , 'slurm-log', Config.get('LOGGER', 'ocel_log').strip())
 logger.project_ID_topic = os.path.join(filedir , Config.get('LOGGER', 'project_ID_topic').strip())
-logger.project_ID_topic_json = os.path.join(filedir , Config.get('LOGGER', 'project_ID_topic_json').strip())

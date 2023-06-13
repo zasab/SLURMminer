@@ -1,0 +1,10 @@
+pm4py
+Flask
+Flask-API
+Flask-CORS
+hurry.filesize
+seaborn
+plotly
+pysftp
+paramiko
+pandas==1.5.3

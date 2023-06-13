@@ -14,9 +14,9 @@
 
 ### Execution Procedure
 
-1. Run the "app.py" script and employ the "pip install" command to install all the required packages.
+1. Run the "app.py" script and employ the "pip install" command to install all the required packages. You can find a list of some package requirements in the requirements.txt file.
 2. Within the "DEV-front" directory, execute the commands "npm install" and "npm run dev" (Node.js is required).
-   - Open the URL indicated as "⇒ Local:" in your browser to access the application.
+   - Open the URL indicated as "⇒ Local:" in your web browser to access the application.
 
 ## 1. Overview
 
