@@ -28,6 +28,7 @@ export const startLoggingQuery = defineStore({
     async getData() {
       try {
         this.error = "";
+        this.discovery_error = ""
         const res = await authService.login({
           username: this.username,
           password: this.password,
@@ -49,6 +50,7 @@ export const startLoggingQuery = defineStore({
     async restart_logging() {
       try {
         this.error = "";
+        this.discovery_error = ""
         const res = await authService.restart_logging({
           username: this.username,
           password: this.password,
@@ -92,6 +94,7 @@ export const discoverModelQuery = defineStore({
       if (project_analysis) {
         console.log(selected_topic, selected_noise_threshold);
         try {
+          this.error = ""
           this.discovery_error = ""
           this.loading = true
           this.recorded_users = ""
@@ -122,6 +125,7 @@ export const discoverModelQuery = defineStore({
       else {
         console.log(this.account);
         try {
+          this.error = ""
           this.discovery_error = ""
           this.loading = true
           this.recorded_users = ""
@@ -206,13 +210,15 @@ export const slurmLogQueries = defineStore({
     error: "",
     accountdottedinfo: "",
     batches_loading: false,
-    account_dotted_loading: false
+    account_dotted_loading: false,
+    discovery_error: "",
   }),
 
   actions: {
     async getData() {
       try {
         this.error = "";
+        this.discovery_error = ""
         const res = await authService.get_slurm_log({
           slurm_log_content: this.slurm_log_content
         });
@@ -233,6 +239,7 @@ export const slurmLogQueries = defineStore({
     async getNormalEventLog() {
       try {
         this.error = "";
+        this.discovery_error = ""
         this.get_log_loading = true;
         const res = await authService.get_normal_event_log({
           normal_log_content: this.normal_log_content
@@ -256,6 +263,7 @@ export const slurmLogQueries = defineStore({
     async getOCELLog() {
       try {
         this.error = "";
+        this.discovery_error = ""
         const res = await authService.get_ocel_log({
           ocel_log_content: ""
         });
@@ -278,6 +286,7 @@ export const slurmLogQueries = defineStore({
       try {
         this.scatter_loading = true
         this.error = ""
+        this.discovery_error = ""
         const res = await authService.get_slurm_log_dotted_chart({
           x_axis: axis_data.x_axis,
           y_axis: axis_data.y_axis
@@ -302,6 +311,7 @@ export const slurmLogQueries = defineStore({
     async getNumberOfSubmittedJobsOverTime() {
       try {
         this.error = ""
+        this.discovery_error = ""
         const res = await authService.job_distribution_over_time({ "nothing": "" });
         if (res.data.hasOwnProperty('slurm_log_info')) {
           this.distribution_model = ""
@@ -331,6 +341,7 @@ export const slurmLogQueries = defineStore({
     async getNumberOfSubmittedJobsPerAccount() {
       try {
         this.error = ""
+        this.discovery_error = ""
         const res = await authService.job_distribution_per_account({ "nothing": "" });
         if (res.data.hasOwnProperty('jobs_per_account')) {
           this.distribution_model = ""
@@ -353,6 +364,7 @@ export const slurmLogQueries = defineStore({
       try {
         this.distribution_loading = true
         this.error = ""
+        this.discovery_error = ""
         const res = await authService.dottet_chart_jobid_duration_label({ "nothing": "" });
         if (res.data.hasOwnProperty('time_jobs_state')) {
           this.distribution_model = ""
@@ -376,6 +388,7 @@ export const slurmLogQueries = defineStore({
     async getSlurmLogColumnValues() {
       try {
         this.error = ""
+        this.discovery_error = ""
         const res = await authService.get_slurm_log_column_values({ "nothing": "" });
         if (res.data.hasOwnProperty('slurm_column_values')) {
           while (res.data.slurm_column_values.length == 0) {
@@ -397,6 +410,7 @@ export const slurmLogQueries = defineStore({
     async getProjectIDTopicList() {
       try {
         this.error = ""
+        this.discovery_error = ""
         const res = await authService.get_project_id_topics({ "nothing": "" });
         if (res.data.hasOwnProperty('project_ID_topic_df')) {
           while (res.data.project_ID_topic_df.length == 0) {
@@ -420,6 +434,7 @@ export const slurmLogQueries = defineStore({
     async slurmLogDescription() {
       try {
         this.error = ""
+        this.discovery_error = ""
         this.s_log_desc_loading = true
         this.s_log_description = ""
         const res = await authService.slurm_log_description({ "nothing": "" });
@@ -445,6 +460,7 @@ export const slurmLogQueries = defineStore({
     async getAccountDidBatches() {
       try {
         this.error = ""
+        this.discovery_error = ""
         this.batches_loading = true;
         this.batches_account = "";
         const res = await authService.get_accounts_did_batches({
@@ -474,6 +490,7 @@ export const slurmLogQueries = defineStore({
     async getAccountDottedChartInfo() {
       try {
         this.error = "";
+        this.discovery_error = ""
         this.accountdottedinfo = "";
         this.account_dotted_loading = true
         const res = await authService.get_account_dotted_chart_info({ account: this.batchs_account });

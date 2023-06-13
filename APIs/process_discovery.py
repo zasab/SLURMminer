@@ -87,18 +87,12 @@ def discover_model():
             account_names_str = data['account'].strip()
             account_names_array = account_names_str.split(',')
             accounts_list = []
-            print("step 1")
             for account_name in account_names_array:
                 striped_name = account_name.strip()
-                print("step 2", striped_name, dataframe['ACCOUNT'].unique())
                 if len(striped_name)>0 and striped_name not in dataframe['ACCOUNT'].unique():
-                    print("step 3")
                     return response_json({"error":  "{0} user, not found.".format(striped_name)}, status.HTTP_404_NOT_FOUND)
                 else:
-                    print("step 4")
                     accounts_list.append(striped_name)
-        
-        print(accounts_list)
 
         account_df = dataframe[dataframe['ACCOUNT'].isin(accounts_list)]
         account_df2 = account_df[account_df['ST'].isin(['R'])]

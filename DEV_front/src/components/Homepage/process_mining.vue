@@ -137,8 +137,8 @@ export default {
     sleep(time) {
       return new Promise((resolve) => setTimeout(resolve, time));
     },
+
     search(search_type) {
-      console.log("----2", search_type)
       var searchInput = document.getElementById("search_account");
       var searchValue = searchInput.value;
       var acc_list = []
@@ -161,6 +161,8 @@ export default {
     },
 
     async discover_model_based_on_project() {
+      this.error = ""
+      this.discovery_error = ""
       var selected_topic = document.getElementById("selectedTopic").innerHTML;
       var selected_noise_threshold = document.getElementById("noise_threshold").value;
       this.unique_accounts = ""
@@ -171,6 +173,8 @@ export default {
     ...mapActions(discoverModelQuery, ["getModel"]),
 
     async discover_model_based_on_account() {
+      this.error = ""
+      this.discovery_error = ""
       var selected_topic = document.getElementById("selectedTopic").innerHTML;
       var selected_noise_threshold = document.getElementById("noise_threshold").value;
       this.unique_accounts = ""
@@ -181,6 +185,8 @@ export default {
     ...mapActions(discoverModelQuery, ["getModel"]),
 
     async add_option(select_id, option_text) {
+      this.error = ""
+      this.discovery_error = ""
       var select = document.getElementById(select_id);
       var newOption = document.createElement("option");
       var newOptionVal = document.createTextNode(option_text);
@@ -189,6 +195,8 @@ export default {
     },
 
     async get_accounts_list() {
+      this.error = ""
+      this.discovery_error = ""
       this.getSlurmLogColumnValues()
       while (this.unique_accounts.length == 0) {
         await this.sleep(1);
@@ -197,6 +205,8 @@ export default {
     ...mapActions(slurmLogQueries, ["getSlurmLogColumnValues"]),
 
     async get_topic_list() {
+      this.error = ""
+      this.discovery_error = ""
       this.getProjectIDTopicList()
       while (this.topic_list.length == 0) {
         await this.sleep(1);
@@ -205,6 +215,8 @@ export default {
     ...mapActions(slurmLogQueries, ["getProjectIDTopicList"]),
 
     async download_normal_log() {
+      this.error = ""
+      this.discovery_error = ""
       try {
         this.normal_log_content = ""
         this.getNormalEventLog("");
@@ -224,6 +236,8 @@ export default {
     ...mapActions(slurmLogQueries, ["getNormalEventLog"]),
 
     async download_ocel_log() {
+      this.error = ""
+      this.discovery_error = ""
       try {
         this.ocel_log_content = ""
         this.getOCELLog("");
@@ -243,6 +257,8 @@ export default {
     ...mapActions(slurmLogQueries, ["getOCELLog"]),
 
     async add_accounts() {
+      this.error = ""
+      this.discovery_error = ""
       while (this.topic_list.length == 0) {
         await this.sleep(1);
       }
