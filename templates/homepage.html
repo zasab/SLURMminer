@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}Upload BPMN Page{% endblock %}
+{% block content %}
+<!-- Modal -->
+<div class="modal fade" id="checkConnectionModal" tabindex="-1" role="dialog" aria-labelledby="checkConnectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="container mt-3">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div id="responseMessage"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <form>
+                            <div class="form-group">
+                                <label for="servername">Server Name</label>
+                                <input type="text" class="form-control" id="servername" placeholder="Enter server name">
+                            </div>
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input type="text" class="form-control" id="username" placeholder="Enter your username">
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password" class="form-control" id="password" placeholder="Enter your password">
+                            </div>
+                            <button type="button" class="btn btn-success btn-block" onclick="checkConnection()">Check Server Connection</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div class="row">
+    <button type="button" class="btn btn-primary" id="checkConnectionModalBtn">Check Remote Connection</button>
+    <div class="col-md-12">
+        <div class="d-flex justify-content-center mt-4">
+            <h3>Upload BPMN File and Scripts</h3>
+        </div>
+        <hr>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <div class="row">
+                    <div class="col">
+                        <div class="custom-file">
+                            <input oninput="filesize(this);" type="file" class="custom-file-input" name="bpmn_file" id="bpmn_file">
+                            <label class="custom-file-label" for="bpmn_file">Select BPMN...</label>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" name="script_folder_zip" id="script_folder_zip">
+                            <label class="custom-file-label" for="script_folder_zip">Select Scripts...</label>
+                        </div>
+                    </div>
+                </div>                
+                <div class="d-flex justify-content-center mt-3">
+                    <button type="submit" class="btn btn-primary mr-3" name="create_exe_file" id="create-exe-btn">
+                        <span id="create-exe-btn-spinner" class="d-none spinner-border spinner-border-sm mr-2"></span>
+                        Create Executable File
+                    </button>
+                </div>
+                <div class="d-flex justify-content-center mt-3">
+                    <div id="status-message" class="align-self-center"></div>
+                </div>
+            </div>
+        </form>
+    </div>     
+</div>
+{% endblock %}
+
+{% block script%}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    document.getElementById('servername').value = 'login18-1.hpc.itc.rwth-aachen.de';
+    document.getElementById('username').value = 'de467102';
+    document.getElementById('password').value = 'zahra123';
+
+    $(document).ready(function() {
+        $("#checkConnectionModalBtn").click(function() {
+        $("#checkConnectionModal").modal('show');
+        });
+    });
+    function updateResponseMessageModal(message, isError) {
+        var responseMessageDiv = document.getElementById('responseMessage');
+        var newMessage = '<p class="' + (isError ? 'text-danger' : 'text-success') + '">' + message + '</p>';
+        
+        // Check if there's already a message, and if so, remove it
+        if (responseMessageDiv.firstChild) {
+            responseMessageDiv.removeChild(responseMessageDiv.firstChild);
+        }
+
+        responseMessageDiv.innerHTML = newMessage;
+
+        setTimeout(function () {
+            responseMessageDiv.removeChild(responseMessageDiv.firstChild);
+        }, 10000); // 5000 milliseconds = 5 seconds
+    }
+
+    function updateResponseMessage(message, isError) {
+        var responseMessageDiv = document.getElementById('status-message');
+        var newMessage = '<p class="' + (isError ? 'text-danger' : 'text-success') + '">' + message + '</p>';
+
+        // Check if there's already a message, and if so, remove it
+        if (responseMessageDiv.firstChild) {
+            responseMessageDiv.removeChild(responseMessageDiv.firstChild);
+        }
+
+        responseMessageDiv.innerHTML = newMessage;
+
+        setTimeout(function () {
+            responseMessageDiv.removeChild(responseMessageDiv.firstChild);
+        }, 5000); // Remove the message after 5000 milliseconds (5 seconds)
+    }
+
+    function filesize(elem) {
+        document.cookie = `filesize=${elem.files[0].size}`;
+    }
+    $('#bpmn_file, #script_folder_zip').on('change', function() {
+        var fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').html(fileName);
+    });
+
+    function generateSlurmScriptFromFiles() {
+        var bpmnFile = $('#bpmn_file')[0].files[0];
+        var scriptFolderZip = $('#script_folder_zip')[0].files[0];
+
+        var formData = new FormData();
+        formData.append('bpmn_file', bpmnFile);
+        formData.append('script_folder_zip', scriptFolderZip);
+
+        $('#create-exe-btn').prop('disabled', true);
+        $('#create-exe-btn-spinner').removeClass('d-none');
+
+        $.ajax({
+            url: '/generate_slurm_script_from_files',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(data) {
+                console.log(data);
+                $('#create-exe-btn').prop('disabled', false);
+                $('#create-exe-btn-spinner').addClass('d-none');
+                updateResponseMessage(data.msg, false);
+                $('#status-message').addClass('text-success');
+            },
+            error: function(error) {
+                console.error('Error:', error);
+                $('#create-exe-btn').prop('disabled', false);
+                $('#create-exe-btn-spinner').addClass('d-none');
+                var errorResponse = JSON.parse(error.responseText);
+                updateResponseMessage(errorResponse.error, true);
+                $('#status-message').addClass('text-danger');
+            }
+        });
+    }
+    // Add a click event listener to the button
+    $('#create-exe-btn').on('click', function(event) {
+        event.preventDefault(); // Prevent the default form submission behavior
+        generateSlurmScriptFromFiles(); // Call the function to make the AJAX request
+    });
+
+    function checkConnection() {
+        var username = document.getElementById('username').value;
+        var servername = document.getElementById('servername').value;
+        var password = document.getElementById('password').value;
+
+        // Create data object to send in the AJAX request
+        var data = {
+            username: username,
+            servername: servername,
+            password: password
+        };
+
+        // Make the AJAX request using fetch
+        fetch('/check_connection', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.msg){
+                updateResponseMessageModal(data.msg, false);
+            }
+            else{
+                updateResponseMessageModal('Error: ' + data.error, true);
+            }   
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            updateResponseMessageModal('Error: ' + error.message, true);
+        });
+    }
+
+</script>
+
+{% endblock %}
