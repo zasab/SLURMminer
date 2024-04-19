@@ -1,4 +1,4 @@
-from general import BpmnUtils
+from functions import BpmnUtils
 
 def srun_file_content(srun_filename, srun_command, res_file_name, REMOTE_FOLDER_NAME, REMOTE_PATH_HOME_FILE):
     text1 = """#!/usr/local_rwth/bin/zsh
@@ -31,11 +31,16 @@ fi
 
     srun_filename.write(text1 + text2)
 
-def create(processed_bpmn, BPMN_directory, should_be_uploaded_list, REMOTE_FOLDER_NAME, REMOTE_PATH_HOME_FILE):
-    activity_belongings = BpmnUtils.convert_input_to_dict_output(processed_bpmn['_BPMN__node_annotations'])
-    for task, task_features in activity_belongings.items():
-        srun_file_path = "{}/{}.sh".format(BPMN_directory, task_features['srun_filename'])
-        srun_file = open(srun_file_path, 'w')
-        should_be_uploaded_list.append(srun_file_path)
-        res_file_name = str(task_features['srun_filename'])
-        srun_file_content(srun_file, task_features['srun_command'], res_file_name, REMOTE_FOLDER_NAME, REMOTE_PATH_HOME_FILE)
+def create(processed_bpmn):
+    print()
+    print("SRunFactory -------------------")
+    activity_belongings = BpmnUtils.transform_annotations(processed_bpmn.__dict__)
+    # print(activity_belongings)
+    print()
+    # 
+    # for task, task_features in activity_belongings.items():
+    #     srun_file_path = "{}/{}.sh".format(BPMN_directory, task_features['srun_filename'])
+    #     srun_file = open(srun_file_path, 'w')
+    #     should_be_uploaded_list.append(srun_file_path)
+    #     res_file_name = str(task_features['srun_filename'])
+    #     srun_file_content(srun_file, task_features['srun_command'], res_file_name, REMOTE_FOLDER_NAME, REMOTE_PATH_HOME_FILE)

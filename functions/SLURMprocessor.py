@@ -6,21 +6,21 @@ sys.path.insert(1, basedir)
 # from werkzeug.utils import secure_filename
 from functions import bpmn_parser
 # import random
-# from functions import SRunFactory
+from functions import SRunFactory
 # from functions import SBatchFactory
 # from functions import ssh_connection
 # import pysftp
 # import config
 # from functions.file_management import get_value
 
-def create_runable_files(bpmn_file_path):
+def preprocessing_bpmn(bpmn_file_path):
     file_name = os.path.basename(bpmn_file_path)
     bpmn_graph = bpmn_parser.extract_bpmn_information(bpmn_file_path)
-    bpmn_graph1 = bpmn_parser.process_explicit_loops(bpmn_graph)
+    bpmn_graph_processed_explicit_loops = bpmn_parser.process_explicit_loops(bpmn_graph)
     # print("bpmn_graph1:  ", bpmn_graph1.__dict__)
-#     SRunFactory.create(processed_bpmn, bpmn_info['directorypath'], should_be_uploaded_list, config.remoteserver.REMOTE_FOLDER_NAME, get_value(config.remoteserver.REMOTE_PATH_HOME_FILE))
+    SRunFactory.create(bpmn_graph_processed_explicit_loops)
 #     SBatchFactory.create(processed_bpmn, should_be_uploaded_list, bpmn_info, local_exe_filename, remoteserver_info)
-    return bpmn_graph1
+    return bpmn_graph_processed_explicit_loops
 
 # def upload_and_run_exefile_on_SLURM(local_exe_filename, remoteserver_info, should_be_uploaded_list, script_folder_zip):
 #     try:

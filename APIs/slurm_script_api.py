@@ -46,8 +46,6 @@ def create_dag(nodes, arcs):
     return G
 
 
-
-
 @slurm_script_manager.route("/generate_slurm_script_from_files", methods = ["POST", "GET"])
 def generate_slurm_script_from_files():
     try:
@@ -59,11 +57,12 @@ def generate_slurm_script_from_files():
                 bpmn_file_path = storageprocessor.save_file(bpmn_file, config.bpmn.uploaded_files_directory)
                 script_folder_zip_path = storageprocessor.save_file(script_folder_zip, config.bpmn.uploaded_files_directory)
 
-                should_be_uploaded_list = SLURMprocessor.create_runable_files(bpmn_file_path)
-                nodes = should_be_uploaded_list.__dict__['_BPMN__nodes']
-                arcs = should_be_uploaded_list.__dict__['_BPMN__flows']
-                dag = create_dag(nodes, arcs)
-                storageprocessor.save_dag(dag)
+                processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
+
+                # nodes = processed_bpmn.__dict__['_BPMN__nodes']
+                # arcs = processed_bpmn.__dict__['_BPMN__flows']
+                # dag = create_dag(nodes, arcs)
+                # storageprocessor.save_dag(dag)
 
 
 
@@ -76,7 +75,7 @@ def generate_slurm_script_from_files():
                 #     "filepath": bpmn_file_path,
                 #     "directorypath": config.bpmn.uploaded_files_directory
                 # }
-                # should_be_uploaded_list = main.create_runable_files(bpmn_info, local_exe_filename, remoteserver_info, script_folder_name)
+                # should_be_uploaded_list = main.preprocessing_bpmn(bpmn_info, local_exe_filename, remoteserver_info, script_folder_name)
                 # should_be_uploaded_list.append(scripts_dir_path)
                 # should_be_uploaded_list.append(basedir + "/general/wrap_time.sh")
                 # main.upload_and_run_exefile_on_SLURM(local_exe_filename, remoteserver_info, should_be_uploaded_list, script_folder_zip.filename)
