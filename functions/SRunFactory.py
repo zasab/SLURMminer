@@ -1,4 +1,5 @@
 from functions import BpmnUtils
+import config
 
 def srun_file_content(srun_filename, srun_command, res_file_name, REMOTE_FOLDER_NAME, REMOTE_PATH_HOME_FILE):
     text1 = """#!/usr/local_rwth/bin/zsh
@@ -32,15 +33,9 @@ fi
     srun_filename.write(text1 + text2)
 
 def create(processed_bpmn):
-    print()
-    print("SRunFactory -------------------")
-    activity_belongings = BpmnUtils.transform_annotations(processed_bpmn.__dict__)
-    # print(activity_belongings)
-    print()
-    # 
-    # for task, task_features in activity_belongings.items():
-    #     srun_file_path = "{}/{}.sh".format(BPMN_directory, task_features['srun_filename'])
-    #     srun_file = open(srun_file_path, 'w')
+    transformed_annotations = BpmnUtils.transform_annotations(processed_bpmn.__dict__)
+    for task, command in transformed_annotations.items():
+        srun_file_path = "{}/{}.sh".format(config.bpmn.uploaded_files_directory, task.id)
+        srun_file = open(srun_file_path, 'w')
     #     should_be_uploaded_list.append(srun_file_path)
-    #     res_file_name = str(task_features['srun_filename'])
-    #     srun_file_content(srun_file, task_features['srun_command'], res_file_name, REMOTE_FOLDER_NAME, REMOTE_PATH_HOME_FILE)
+        srun_file_content(srun_file, command, task.id, "TODO", "TODO")

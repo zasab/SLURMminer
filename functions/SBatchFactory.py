@@ -117,11 +117,6 @@ def create(processed_bpmn, should_be_uploaded_list, bpmn_info, local_exe_filenam
             command = ''
             srun_command = ''
         
-        print("step 1")
-        print("str(node): ", str(node))
-        print("command: ", command)
-        print("srun_command: ", srun_command)
-        print("step 3")
         v = Vertex(str(node), command, srun_command)
         nodes_vertex[node] = v
         vertices.append(v)

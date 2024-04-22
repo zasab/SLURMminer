@@ -4,12 +4,20 @@ filedir = dirname(abspath(__file__))
 basedir = dirname(dirname(abspath(__file__)))
 sys.path.insert(1, basedir)
 from werkzeug.utils import secure_filename
-import config
+import shutil
 import matplotlib.pyplot as plt
 import networkx as nx
 
 import os
 from werkzeug.utils import secure_filename
+
+def remove_dir(directory):
+    try:
+        if os.path.exists(directory):
+            shutil.rmtree(directory)
+            print(f"Directory '{directory}' removed successfully.")
+    except OSError as e:
+        print(f"Error removing directory '{directory}': {e}")
 
 def save_file(file, directory):
     if not os.path.exists(directory):

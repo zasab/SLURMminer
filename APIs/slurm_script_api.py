@@ -54,6 +54,7 @@ def generate_slurm_script_from_files():
             if 'bpmn_file' in files and 'script_folder_zip' in files:
                 bpmn_file = files["bpmn_file"]
                 script_folder_zip = files["script_folder_zip"]
+                storageprocessor.remove_dir(config.bpmn.uploaded_files_directory)
                 bpmn_file_path = storageprocessor.save_file(bpmn_file, config.bpmn.uploaded_files_directory)
                 script_folder_zip_path = storageprocessor.save_file(script_folder_zip, config.bpmn.uploaded_files_directory)
 

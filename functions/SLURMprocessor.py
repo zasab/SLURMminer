@@ -17,7 +17,6 @@ def preprocessing_bpmn(bpmn_file_path):
     file_name = os.path.basename(bpmn_file_path)
     bpmn_graph = bpmn_parser.extract_bpmn_information(bpmn_file_path)
     bpmn_graph_processed_explicit_loops = bpmn_parser.process_explicit_loops(bpmn_graph)
-    # print("bpmn_graph1:  ", bpmn_graph1.__dict__)
     SRunFactory.create(bpmn_graph_processed_explicit_loops)
 #     SBatchFactory.create(processed_bpmn, should_be_uploaded_list, bpmn_info, local_exe_filename, remoteserver_info)
     return bpmn_graph_processed_explicit_loops
