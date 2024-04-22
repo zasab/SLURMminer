@@ -1,3 +1,6 @@
+
+import itertools
+
 def parameter_string_to_dict(parameter_str):
     parameter_id, values_str = parameter_str.split(':[')
     values_list = values_str[:-1].split(',')
@@ -20,3 +23,12 @@ def transform_annotations(bpmn):
         transformed_annotations[node_id] = command_with_values
     
     return transformed_annotations
+
+def generate_combinations(data):
+    keys = list(data.keys())
+    values = list(data.values())
+    result = []
+    for combo in itertools.product(*values):
+        result.append({k: [v] for k, v in zip(keys, combo)})
+    return result
+

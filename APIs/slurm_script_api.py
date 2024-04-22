@@ -92,4 +92,5 @@ def generate_slurm_script_from_files():
              return response_json({"error":  messages["required_files_not_found"]},
                 status.HTTP_404_NOT_FOUND)
     except Exception as e:
+        print(e)
         return response_json({"error":  messages["server_side_error"]}, status.HTTP_500_INTERNAL_SERVER_ERROR)

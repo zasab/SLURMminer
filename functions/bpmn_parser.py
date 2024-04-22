@@ -3,7 +3,7 @@ from pm4py.objects.bpmn.importer.variants.lxml import parse_element, Counts
 from pm4py.objects.bpmn.importer import importer as bpmn_importer
 from lxml import etree, objectify
 import random
-
+from functions import BpmnUtils
 
 def extract_bpmn_information(bpmn_file):
     bpmn_graph = bpmn_importer.apply(bpmn_file)
@@ -23,6 +23,27 @@ def extract_bpmn_information(bpmn_file):
     bpmn_graph = parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_dict, flows_name, nodes_dict, nodes_bounds,
                     flow_info, data_object_ref_dict)
     
+    return bpmn_graph
+
+def pre_processing(bpmn_graph):
+    bpmn_info = bpmn_graph.__dict__
+    new_flows_set = set()
+    flows = bpmn_info['_BPMN__flows']
+    flows_to_remove = set()
+
+    for flow in flows:
+        flow_tuple = (flow.source, flow.target)
+        if flow_tuple not in new_flows_set:
+            new_flows_set.add(flow_tuple)
+        flows_to_remove.add(flow)
+
+    for flow in flows_to_remove:
+        bpmn_graph.remove_flow(flow)
+    
+    for n_flow in new_flows_set:
+        bpmn_flow = BPMN.Flow(n_flow[0], n_flow[1])
+        bpmn_graph.add_flow(bpmn_flow)
+
     return bpmn_graph
 
 def find_rep_flows(bpmn_info):
@@ -52,68 +73,153 @@ def process_explicit_loops(bpmn_graph):
     rep_flows_info = find_rep_flows(bpmn_info)
     _BPMN__node_annotations = bpmn_info['_BPMN__node_annotations']
     affected_nodes_to_remove = set()
-
     affected_flows = []
-    for rep_flow_id, rep_flow_details in rep_flows_info.items():
-        affected_nodes_to_remove.add(rep_flow_details["target_node"])
-        affected_nodes_to_remove.add(rep_flow_details["source_node"])
-        for flow_id, flow_details in bpmn_info["_BPMN__flows_details"].items():
-            if flow_details["source_ref"] == rep_flow_details["target_node"]:
-                activity_with_loop = flow_details["target_ref"]
-                
-            if (flow_details["source_ref"] == rep_flow_details["target_node"] or
-                flow_details["target_ref"] == rep_flow_details["target_node"] or
-                flow_details["source_ref"] == rep_flow_details["source_node"] or
-                flow_details["target_ref"] == rep_flow_details["source_node"]):
-                affected_flows.append(flow_details)
-                
-            if (flow_details["source_ref"] == rep_flow_details["source_node"] and
-                flow_id != rep_flow_id):
-                the_target_node = flow_details["target_ref"]
-                
-            if (flow_details["target_ref"] == rep_flow_details["target_node"] and
-                flow_id != rep_flow_id):
-                the_source_node = flow_details["source_ref"]
-                
-                
-        new_activities = list()
-        new_activities.append(activity_with_loop)
-        for i in range(1, rep_flow_details["random_value"]):
-            # base_name, application_label = str(activity_with_loop).split('@')
-            # base_app, extension= application_label.split(".")
-            # new_activity_name = f"{base_name}___explicit_loop___@{base_app}{i}.{extension}" if extension else f"{base_name}___explicit_loop___@{base_app}{i}"
-            new_activity_name = activity_with_loop.name
-            new_activity = BPMN.Task(name=new_activity_name)
-            bpmn_graph.add_node(new_activity)
-            bpmn_graph.add_node_annotation(new_activity, _BPMN__node_annotations[activity_with_loop])
-            new_activities.append(new_activity)
 
-    affected_flows_to_remove = set()
-    for flow in bpmn_info['_BPMN__flows']:
-        for a_flow in affected_flows:
-            if (flow.source == a_flow["source_ref"] and 
-                flow.target == a_flow["target_ref"]):
-                affected_flows_to_remove.add(flow)
-            else:
-                pass
+    if len(rep_flows_info) == 0:
+        pass
+    else:
+        for rep_flow_id, rep_flow_details in rep_flows_info.items():
+            affected_nodes_to_remove.add(rep_flow_details["target_node"])
+            affected_nodes_to_remove.add(rep_flow_details["source_node"])
+            for flow_id, flow_details in bpmn_info["_BPMN__flows_details"].items():
+                if flow_details["source_ref"] == rep_flow_details["target_node"]:
+                    activity_with_loop = flow_details["target_ref"]
+                    
+                if (flow_details["source_ref"] == rep_flow_details["target_node"] or
+                    flow_details["target_ref"] == rep_flow_details["target_node"] or
+                    flow_details["source_ref"] == rep_flow_details["source_node"] or
+                    flow_details["target_ref"] == rep_flow_details["source_node"]):
+                    affected_flows.append(flow_details)
+                    
+                if (flow_details["source_ref"] == rep_flow_details["source_node"] and
+                    flow_id != rep_flow_id):
+                    the_target_node = flow_details["target_ref"]
+                    
+                if (flow_details["target_ref"] == rep_flow_details["target_node"] and
+                    flow_id != rep_flow_id):
+                    the_source_node = flow_details["source_ref"]
+                    
+                    
+            new_activities = list()
+            new_activities.append(activity_with_loop)
+            for i in range(1, rep_flow_details["random_value"]):
+                # base_name, application_label = str(activity_with_loop).split('@')
+                # base_app, extension= application_label.split(".")
+                # new_activity_name = f"{base_name}___explicit_loop___@{base_app}{i}.{extension}" if extension else f"{base_name}___explicit_loop___@{base_app}{i}"
+                new_activity_name = activity_with_loop.name
+                new_activity = BPMN.Task(name=new_activity_name)
+                bpmn_graph.add_node(new_activity)
+                bpmn_graph.add_node_annotation(new_activity, _BPMN__node_annotations[activity_with_loop])
+                new_activities.append(new_activity)
 
-    for r_flow in affected_flows_to_remove:
-        bpmn_graph.remove_flow(r_flow)
+        affected_flows_to_remove = set()
+        for flow in bpmn_info['_BPMN__flows']:
+            for a_flow in affected_flows:
+                if (flow.source == a_flow["source_ref"] and 
+                    flow.target == a_flow["target_ref"]):
+                    affected_flows_to_remove.add(flow)
+                else:
+                    pass
 
-    new_flows = []
-    new_flows.append((the_source_node, new_activities[0]))
-    for i in range(len(new_activities) - 1):
-        new_flows.append((new_activities[i], new_activities[i + 1]))
-    new_flows.append((new_activities[-1], the_target_node))
+        for r_flow in affected_flows_to_remove:
+            bpmn_graph.remove_flow(r_flow)
 
-    for n_flow in new_flows:
-        flow_tuple = BPMN.Flow(n_flow[0], n_flow[1])
-        bpmn_graph.add_flow(flow_tuple)
+        new_flows = []
+        new_flows.append((the_source_node, new_activities[0]))
+        for i in range(len(new_activities) - 1):
+            new_flows.append((new_activities[i], new_activities[i + 1]))
+        new_flows.append((new_activities[-1], the_target_node))
 
-    for a_node in affected_nodes_to_remove:
-        bpmn_graph.remove_node(a_node)
+        for n_flow in new_flows:
+            flow_tuple = BPMN.Flow(n_flow[0], n_flow[1])
+            bpmn_graph.add_flow(flow_tuple)
+
+        for a_node in affected_nodes_to_remove:
+            bpmn_graph.remove_node(a_node)
 
     return bpmn_graph
+
+def find_hidden_loops(bpmn_info):
+    hidden_flows = {}
+    for flow_id, flow_details in bpmn_info["_BPMN__flows_details"].items():
+        if (flow_details["name"] and not flow_details["name"].startswith("rep:")):
+            hidden_flows[flow_id] = {
+                "iterative_attribute": flow_details["name"],
+                "source_node": flow_details["source_ref"],
+                "target_node": flow_details["target_ref"]
+            }
+
+    return hidden_flows
+
+def process_iterative_flow_details(flows, hidden_flow_details, _BPMN__node_annotations):
+    iterative_attribute = hidden_flow_details['iterative_attribute']
+    start_of_loop = hidden_flow_details['target_node']
+    end_of_loop = hidden_flow_details['source_node']
+
+    nodes_affected_from_iteration = set()
+
+    needs_processed_again_flows = set()
+    for flow in flows:
+        if flow.source == start_of_loop:
+            activity_with_iteration = flow.target
+            nodes_affected_from_iteration.add(activity_with_iteration)
+            iteration_info = _BPMN__node_annotations[activity_with_iteration]
+            iteration_info_dict = {}
+            for iter in iteration_info:
+                iter_value = iter.__dict__['_TextAnnotation__command']
+                parameter_id, values_list = BpmnUtils.parameter_string_to_dict(iter_value)
+                iteration_info_dict[parameter_id]= values_list
+        elif flow.target == end_of_loop:
+            nodes_affected_from_iteration.add(flow.source)
+        elif flow.target in nodes_affected_from_iteration:
+            nodes_affected_from_iteration.add(flow.source)
+        elif flow.source in nodes_affected_from_iteration:
+            nodes_affected_from_iteration.add(flow.target)
+        else:
+            needs_processed_again_flows.add(flow)
+            continue
+
+    for flow2 in needs_processed_again_flows:
+        if flow2.source == start_of_loop:
+            activity_with_iteration = flow2.target
+            nodes_affected_from_iteration.add(activity_with_iteration)
+            iteration_info = _BPMN__node_annotations[activity_with_iteration]
+            iteration_info_dict = {}
+            for iter in iteration_info:
+                iter_value = iter.__dict__['_TextAnnotation__command']
+                parameter_id, values_list = BpmnUtils.parameter_string_to_dict(iter_value)
+                iteration_info_dict[parameter_id]= values_list
+        elif flow2.target == end_of_loop:
+            nodes_affected_from_iteration.add(flow2.source)
+        elif flow2.target in nodes_affected_from_iteration:
+            nodes_affected_from_iteration.add(flow2.source)
+        elif flow2.source in nodes_affected_from_iteration:
+            nodes_affected_from_iteration.add(flow2.target)
+        else:
+            if flow2 not in needs_processed_again_flows:
+                needs_processed_again_flows.add(flow2)
+            continue
+
+    return activity_with_iteration, BpmnUtils.generate_combinations(iteration_info_dict), nodes_affected_from_iteration
+
+
+def process_hidden_loops(bpmn_graph):
+    bpmn_info = bpmn_graph.__dict__
+    nodes = bpmn_info['_BPMN__nodes']
+    flows = bpmn_info['_BPMN__flows']
+
+    _BPMN__node_annotations = bpmn_info['_BPMN__node_annotations']
+    hidden_flows = find_hidden_loops(bpmn_info)
+    
+    for hidden_flow_id, hidden_flow_details in hidden_flows.items():
+        activity_with_iteration, combinations, nodes_affected_from_iteration = process_iterative_flow_details(flows, hidden_flow_details, _BPMN__node_annotations)
+        affected_flows_to_remove = set()
+        affected_nodes_to_remove = set()
+
+    
+
+
+
 
 # def process_split_exclusive_gateway(parsed_bpmn):
 #     bpmn_graph_obj = parsed_bpmn.__dict__
