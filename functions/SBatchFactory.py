@@ -81,105 +81,135 @@ def extract_values(command, data_dict):
             extracted_values.append(data_dict[part[1:]])
     return extracted_values
 
-def create(processed_bpmn, should_be_uploaded_list, bpmn_info, local_exe_filename, remoteserver_info):
-
+def create(bpmn):
     # we need these credentials to check if an arguments in a folder of not (for that we have to contact)
     # to the cluster simply check if it is a folder or not
-    HOST_SERVER = remoteserver_info['serverhost']
-    USERNAME_RWTH = remoteserver_info['username']
-    PASSWORD_PATH = remoteserver_info['password']
+    # HOST_SERVER = remoteserver_info['serverhost']
+    # USERNAME_RWTH = remoteserver_info['username']
+    # PASSWORD_PATH = remoteserver_info['password']
+    bpmn_dict = bpmn.__dict__
+    # for part_id, part_details in bpmn_dict.items():
+    #     print(part_id)
+    #     print(part_details)
+    #     print()
+    nodes = bpmn_dict['_BPMN__nodes']
+    flows = bpmn_dict['_BPMN__flows']
+    g = Graph()
+    
+    nodes_vertex ={}
+    for node in nodes:
+        v = Vertex(node.id, "____sbatch#######_TODO_{}".format(node.id), "____srun#######_TODO_{}".format(node.id))
+        g.add_vertex(v)
+        nodes_vertex[node] = v
 
-    nodes = processed_bpmn['_BPMN__nodes']
-    flows = processed_bpmn['_BPMN__flows']
-    node_flow_groups = processed_bpmn['node_flow_groups']
-    node_info = BpmnUtils.convert_input_to_dict_output(processed_bpmn['_BPMN__node_annotations'])
-    args_dict = {}
-    for key, value in node_info.items():
-        sbatch_command = f"{key.replace(' ', '_')}.sh"
-        value['sbatch_command'] = sbatch_command
+    for flow in flows:
+        edge = (nodes_vertex[flow.source], nodes_vertex[flow.target])
+        g.add_edge(edge)
 
-        if 'srun_command' in value:
-            command = value['srun_command']
-            values = extract_values(command, value)
-            args_dict[key] = values
+    reverse_order_vertices = g.topological_sort()
+    g.generate_script(reverse_order_vertices)
+        
+
+        
+    # flows = bpmn_dict['_BPMN__flows']
+    # for flow_id, flow_details in bpmn_dict["_BPMN__flows_details"].items():
+    #     print()
+    #     print(flow_id)
+    #     print("source_ref: ", flow_details["source_ref"])
+
+    # flows_set = set()
+    # for flow in flows:
+    #     flows_set.add(((flow.source).id, (flow.target).id))
+
+    # node_flow_groups = bpmn_dict['node_flow_groups']
+    # node_info = BpmnUtils.convert_input_to_dict_output(bpmn_dict['_BPMN__node_annotations'])
+    # args_dict = {}
+    # for key, value in node_info.items():
+    #     sbatch_command = f"{key.replace(' ', '_')}.sh"
+    #     value['sbatch_command'] = sbatch_command
+
+    #     if 'srun_command' in value:
+    #         command = value['srun_command']
+    #         values = extract_values(command, value)
+    #         args_dict[key] = values
     # we have Vertex class, that for each node we create a Vertex that has
     # one id, name, and a command
     # here we want to create a vertex for each node
     # nodes_vertex assign 'pm4py.objects.bpmn.obj.BPMN.NormalEndEvent' and 'pm4py.objects.bpmn.obj.BPMN.Task' types to 'general.SBatchFactory.Vertex'
-    vertices = list()
-    nodes_vertex = dict()
-    for node in nodes:
-        if str(node) in node_info:
-            command = node_info[str(node)]['sbatch_command']
-            srun_command_parts = str(node_info[str(node)]['srun_command']).strip().split(' ')
-            srun_command = srun_command_parts[0] if srun_command_parts else ''
-        else:
-            command = ''
-            srun_command = ''
+    # vertices = list()
+    # nodes_vertex = dict()
+    # for node in nodes:
+    #     if str(node) in node_info:
+    #         command = node_info[str(node)]['sbatch_command']
+    #         srun_command_parts = str(node_info[str(node)]['srun_command']).strip().split(' ')
+    #         srun_command = srun_command_parts[0] if srun_command_parts else ''
+    #     else:
+    #         command = ''
+    #         srun_command = ''
         
-        v = Vertex(str(node), command, srun_command)
-        nodes_vertex[node] = v
-        vertices.append(v)
+    #     v = Vertex(str(node), command, srun_command)
+    #     nodes_vertex[node] = v
+    #     vertices.append(v)
 
     
-    # we need to have flows in vertex type, which vertex goes to which one?
-    # here type(flow) is 'pm4py.objects.bpmn.obj.BPMN.SequenceFlow'
-    # and type(flow.source) is 'pm4py.objects.bpmn.obj.BPMN.Task'
-    filtered_flows = filter_flows(flows)
-    edges = list()
-    for flow in filtered_flows:
-        edge = (nodes_vertex[flow.source], nodes_vertex[flow.target])
-        if edge not in edges:
-            edges.append(edge)
+    # # we need to have flows in vertex type, which vertex goes to which one?
+    # # here type(flow) is 'pm4py.objects.bpmn.obj.BPMN.SequenceFlow'
+    # # and type(flow.source) is 'pm4py.objects.bpmn.obj.BPMN.Task'
+    # filtered_flows = filter_flows(flows)
+    # edges = list()
+    # for flow in filtered_flows:
+    #     edge = (nodes_vertex[flow.source], nodes_vertex[flow.target])
+    #     if edge not in edges:
+    #         edges.append(edge)
 
-    # now that we have vertices and edges lets create the Graph
-    g = Graph()
-    for vertex in vertices:
-        g.add_vertex(vertex)
-    for edge in edges:
-        g.add_edge(edge)
+    # # now that we have vertices and edges lets create the Graph
+    # g = Graph()
+    # for vertex in vertices:
+    #     g.add_vertex(vertex)
+    # for edge in edges:
+    #     g.add_edge(edge)
 
-    for element in args_dict:
-        x = generate_combs(args_dict[element], [], 0)
-        args_dict[element] = [str(x)]
+    # for element in args_dict:
+    #     x = generate_combs(args_dict[element], [], 0)
+    #     args_dict[element] = [str(x)]
 
-    # why?
-    reverse_order_vertices = g.topological_sort()
-    reverse_order_vertices.reverse()
+    # # why?
+    # reverse_order_vertices = g.topological_sort()
+    # reverse_order_vertices.reverse()
 
 
-    labels = {}
-    CI = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-    for vtx in reverse_order_vertices:
-        # get corresponding vertex
-        verttex = g.lookup(vtx.name)
+    # labels = {}
+    # CI = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+    # for vtx in reverse_order_vertices:
+    #     # get corresponding vertex
+    #     verttex = g.lookup(vtx.name)
 
-        labels[str(verttex)] = CI
+    #     labels[str(verttex)] = CI
 
-        if str(verttex) in args_dict:
-            argus = args_dict[str(verttex)]
-            for argument in argus:               
-                convert_to_list = get_list(argument)
-                if len(convert_to_list) > 1:
-                    g.replicate_subgraph(verttex, convert_to_list, args_dict, filtered_flows, nodes_vertex, node_flow_groups, labels)
-                elif len(convert_to_list) == 1:
-                    print("we want to check if {} is a folder.".format(convert_to_list[0]))
-                    # TODO: how to create richtig input values
-                    folder_state, folder_content = is_folder(convert_to_list[0], HOST_SERVER, USERNAME_RWTH, PASSWORD_PATH)
-                    if folder_state:
-                        if len(folder_content) > 1:
-                            contents_path = [os.path.join(convert_to_list[0], item) for item in folder_content]
-                            # is_file(contents_path[0], HOST_SERVER, USERNAME_RWTH, PASSWORD_PATH)
-                            args_dict[str(verttex)] = "[\"" + str(contents_path) + "\"]"
-                            g.replicate_subgraph(verttex, folder_content, args_dict, filtered_flows, nodes_vertex, node_flow_groups, labels)
-                    else:
-                        args_dict[str(verttex)] = str(folder_content[0])
-                else:
-                    args_dict[str(verttex)] = ""
+    #     if str(verttex) in args_dict:
+    #         argus = args_dict[str(verttex)]
+    #         for argument in argus:               
+    #             convert_to_list = get_list(argument)
+    #             if len(convert_to_list) > 1:
+    #                 g.replicate_subgraph(verttex, convert_to_list, args_dict, filtered_flows, nodes_vertex, node_flow_groups, labels)
+    #             elif len(convert_to_list) == 1:
+    #                 print("we want to check if {} is a folder.".format(convert_to_list[0]))
+    #                 # TODO: how to create richtig input values
+    #                 folder_state, folder_content = is_folder(convert_to_list[0], HOST_SERVER, USERNAME_RWTH, PASSWORD_PATH)
+    #                 if folder_state:
+    #                     if len(folder_content) > 1:
+    #                         contents_path = [os.path.join(convert_to_list[0], item) for item in folder_content]
+    #                         # is_file(contents_path[0], HOST_SERVER, USERNAME_RWTH, PASSWORD_PATH)
+    #                         args_dict[str(verttex)] = "[\"" + str(contents_path) + "\"]"
+    #                         g.replicate_subgraph(verttex, folder_content, args_dict, filtered_flows, nodes_vertex, node_flow_groups, labels)
+    #                 else:
+    #                     args_dict[str(verttex)] = str(folder_content[0])
+    #             else:
+    #                 args_dict[str(verttex)] = ""
 
-    script = g.generate_script(args_dict, node_flow_groups, labels, CI)
-    local_exe_path = os.path.join(bpmn_info['directorypath'], local_exe_filename)
-    F = open(local_exe_path, "w")
-    should_be_uploaded_list.append(str(local_exe_path))
-    F.write(script)
-    F.close()
+    # script = g.generate_script(args_dict, node_flow_groups, labels, CI)
+    # local_exe_path = os.path.join(bpmn_info['directorypath'], local_exe_filename)
+    # F = open(local_exe_path, "w")
+    # should_be_uploaded_list.append(str(local_exe_path))
+    # F.write(script)
+    # F.close()

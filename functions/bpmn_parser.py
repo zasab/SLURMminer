@@ -51,9 +51,12 @@ def process_explicit_loops(bpmn_graph):
     bpmn_info = bpmn_graph.__dict__
     rep_flows_info = find_rep_flows(bpmn_info)
     _BPMN__node_annotations = bpmn_info['_BPMN__node_annotations']
+    affected_nodes_to_remove = set()
 
     affected_flows = []
     for rep_flow_id, rep_flow_details in rep_flows_info.items():
+        affected_nodes_to_remove.add(rep_flow_details["target_node"])
+        affected_nodes_to_remove.add(rep_flow_details["source_node"])
         for flow_id, flow_details in bpmn_info["_BPMN__flows_details"].items():
             if flow_details["source_ref"] == rep_flow_details["target_node"]:
                 activity_with_loop = flow_details["target_ref"]
@@ -106,6 +109,9 @@ def process_explicit_loops(bpmn_graph):
     for n_flow in new_flows:
         flow_tuple = BPMN.Flow(n_flow[0], n_flow[1])
         bpmn_graph.add_flow(flow_tuple)
+
+    for a_node in affected_nodes_to_remove:
+        bpmn_graph.remove_node(a_node)
 
     return bpmn_graph
 

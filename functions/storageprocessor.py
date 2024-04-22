@@ -15,7 +15,7 @@ def remove_dir(directory):
     try:
         if os.path.exists(directory):
             shutil.rmtree(directory)
-            print(f"Directory '{directory}' removed successfully.")
+            # print(f"Directory '{directory}' removed successfully.")
     except OSError as e:
         print(f"Error removing directory '{directory}': {e}")
 
