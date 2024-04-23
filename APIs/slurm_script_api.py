@@ -60,8 +60,15 @@ def generate_slurm_script_from_files():
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
 
-                # nodes = processed_bpmn.__dict__['_BPMN__nodes']
-                # arcs = processed_bpmn.__dict__['_BPMN__flows']
+                nodes = processed_bpmn.__dict__['_BPMN__nodes']
+                arcs = processed_bpmn.__dict__['_BPMN__flows']
+
+                # print()
+                # print(nodes)
+                # print()
+                # print(arcs)
+                # print()
+
                 # dag = create_dag(nodes, arcs)
                 # storageprocessor.save_dag(dag)
 

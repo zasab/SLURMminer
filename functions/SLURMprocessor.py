@@ -22,7 +22,7 @@ def preprocessing_bpmn(bpmn_file_path):
     # SRunFactory.create(bpmn_graph_processed_explicit_loops)
     # SBatchFactory.create(processed_bpmn, should_be_uploaded_list, bpmn_info, local_exe_filename, remoteserver_info)
     # SBatchFactory.create(bpmn_graph_processed_explicit_loops)
-    return bpmn_graph_processed_explicit_loops
+    return bpmn_graph_processed_hidden_loops
 
 # def upload_and_run_exefile_on_SLURM(local_exe_filename, remoteserver_info, should_be_uploaded_list, script_folder_zip):
 #     try:

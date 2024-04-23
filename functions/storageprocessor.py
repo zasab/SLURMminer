@@ -31,7 +31,7 @@ def save_file(file, directory):
 
 def save_dag(dag):
     # Create a mapping for nodes with clearer labels
-    node_mapping = {node: str(node).split("@")[-1] if str(node).split("@")[-1] else str(node).split("@")[0] for node in dag.nodes}
+    node_mapping = {node: node.id for node in dag.nodes}
     
     # Relabel nodes with clearer labels
     dag_shortened = nx.relabel_nodes(dag, node_mapping)
