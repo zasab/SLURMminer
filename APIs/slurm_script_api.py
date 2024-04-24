@@ -25,7 +25,29 @@ slurm_script_manager = Blueprint('slurm_script_manager', __name__)
 
 import networkx as nx
 
-def create_dag(nodes, arcs):
+# def create_dag(nodes, arcs):
+#     G = nx.DiGraph()
+
+#     # Create a set to store all nodes that are targets in arcs
+#     nodes_with_arcs = set()
+#     for arc in arcs:
+#         nodes_with_arcs.add(arc.target)
+#         nodes_with_arcs.add(arc.source)
+
+#     # Add nodes and arcs that are connected to each other
+#     for arc in arcs:
+#         # If both source and target of an arc are in the nodes_with_arcs set, add them to the graph
+#         if arc.source in nodes_with_arcs and arc.target in nodes_with_arcs:
+#             G.add_edge(arc.source, arc.target)
+
+#     # Remove isolated nodes from the graph
+#     G.remove_nodes_from(list(nx.isolates(G)))
+
+#     return G
+
+import networkx as nx
+
+def create_dag(nodes, arcs, node_annotations):
     G = nx.DiGraph()
 
     # Create a set to store all nodes that are targets in arcs
@@ -43,7 +65,13 @@ def create_dag(nodes, arcs):
     # Remove isolated nodes from the graph
     G.remove_nodes_from(list(nx.isolates(G)))
 
+    # Add node annotations as attributes to the graph nodes
+    for node in G.nodes:
+        if node in node_annotations:
+            G.nodes[node]['annotations'] = node_annotations[node]
+
     return G
+
 
 
 @slurm_script_manager.route("/generate_slurm_script_from_files", methods = ["POST", "GET"])
@@ -62,14 +90,9 @@ def generate_slurm_script_from_files():
 
                 nodes = processed_bpmn.__dict__['_BPMN__nodes']
                 arcs = processed_bpmn.__dict__['_BPMN__flows']
+                node_annotations = processed_bpmn.__dict__['_BPMN__node_annotations']
 
-                # print()
-                # print(nodes)
-                # print()
-                # print(arcs)
-                # print()
-
-                # dag = create_dag(nodes, arcs)
+                # dag = create_dag(nodes, arcs, node_annotations)
                 # storageprocessor.save_dag(dag)
 
 

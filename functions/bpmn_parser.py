@@ -41,7 +41,7 @@ def pre_processing(bpmn_graph):
         bpmn_graph.remove_flow(flow)
     
     for n_flow in new_flows_set:
-        bpmn_flow = BPMN.Flow(n_flow[0], n_flow[1])
+        bpmn_flow = BPMN.SequenceFlow(n_flow[0], n_flow[1])
         bpmn_graph.add_flow(bpmn_flow)
 
     return bpmn_graph
@@ -138,7 +138,7 @@ def process_explicit_loops(bpmn_graph):
         new_flows.append((new_activities[-1], the_target_node))
 
         for n_flow in new_flows:
-            flow_tuple = BPMN.Flow(n_flow[0], n_flow[1])
+            flow_tuple = BPMN.SequenceFlow(n_flow[0], n_flow[1])
             bpmn_graph.add_flow(flow_tuple)
 
         for a_node in affected_nodes_to_remove:
@@ -234,53 +234,67 @@ def process_hidden_loops(bpmn_graph):
         affected_nodes_to_remove = set()
         all_new_activities = {}
         all_new_flows = set()
+        correspondings = {}
+        before_last_nodes = []
 
         affected_nodes_to_remove.add(start_of_loop)
         affected_nodes_to_remove.add(end_of_loop)
-        print()
-        print("incomings: ", incomings)
         new_start = BPMN.ParallelGateway(start_of_loop.id, name=start_of_loop.id)
-        # all_new_activities[new_start] = {}
-        print()
-        print("new_start: ", new_start)
+        
+        correspondings[start_of_loop] = {new_start}
+        all_new_activities[new_start] = ""
+        for in_node in incomings:
+            in_flow = BPMN.SequenceFlow(in_node, new_start)
+            all_new_flows.add(in_flow)
+
         new_end = BPMN.ParallelGateway(end_of_loop.id, name=end_of_loop.id)
-        # all_new_activities[new_end] = {}
-        print()
-        print("new_end: ", new_end)
-        print()
-        print("outgoings: ", outgoings)
+        correspondings[end_of_loop] = {new_end}
+        all_new_activities[new_end] = ""
+        for out_node in outgoings:
+            out_flow = BPMN.SequenceFlow(new_end, out_node)
+            all_new_flows.add(out_flow)
         
         for com in combinations:
             con_str = [f"{key}:[{', '.join(value)}]" for key, value in com.items()]
             new_activity_name = activity_with_iteration.name
             new_activity = BPMN.Task(name=new_activity_name)
+            if activity_with_iteration not in correspondings:
+                correspondings[activity_with_iteration] = {new_activity}
+            else:
+                correspondings[activity_with_iteration].add(new_activity)
+
             all_new_activities[new_activity]=con_str
+            new_start_flow = BPMN.SequenceFlow(new_start, new_activity)
+            all_new_flows.add(new_start_flow)
             # bpmn_graph.add_node(new_activity)
             # bpmn_graph.add_node_annotation(new_activity, con_str)
             affected_nodes_to_remove.add(activity_with_iteration)
-            replicate_sub_nodes(bpmn_graph, start_of_loop, {activity_with_iteration}, {new_activity}, flows, end_of_loop, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove)
+            replicate_sub_nodes(bpmn_graph, start_of_loop, {activity_with_iteration}, {new_activity}, flows, end_of_loop, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings, before_last_nodes)
         
-        print()
-        for neew_node in all_new_activities:
-            print("------all_new_activities: ", neew_node)
+        
+        before_last_nodes_corresponding = correspondings[before_last_nodes[0]]
 
-        print()
+        for before_last_node_corresponding in before_last_nodes_corresponding:
+            before_last_node_flow = BPMN.SequenceFlow(before_last_node_corresponding, new_end)
+            all_new_flows.add(before_last_node_flow)
+
+        for node_id, annot in all_new_activities.items():
+            bpmn_graph.add_node(node_id)
+            if annot:
+                bpmn_graph.add_node_annotation(node_id, annot)
+
         for neew_flow in all_new_flows:
-            print("------all_new_flows: ", neew_flow)
+            bpmn_graph.add_flow(neew_flow)
 
-        print()
         for affected_node in affected_nodes_to_remove:
-            print("------affected_nodes_to_remove: ", affected_node)
-        #     bpmn_graph.remove_node(affected_node)
-        print()
+            bpmn_graph.remove_node(affected_node)
+
         for affected_flow in affected_flows_to_remove:
-            print("------affected_flows_to_remove: ", affected_flow)
-        #     bpmn_graph.remove_flow(affected_flow)
-        print()
-        
+            bpmn_graph.remove_flow(affected_flow)
+
         return bpmn_graph
         
-def replicate_sub_nodes(bpmn_graph, start_of_loop, current_activities, new_activities, flows, end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove):
+def replicate_sub_nodes(bpmn_graph, start_of_loop, current_activities, new_activities, flows, end, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings, before_last_nodes):
     bpmn_obj = bpmn_graph.__dict__
     _BPMN__node_annotations = bpmn_obj['_BPMN__node_annotations']
     
@@ -304,6 +318,11 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, current_activities, new_activ
             if target_node != end:
                 target_nodes.add(target_node)
                 target_new_node = BPMN.Task(name=target_node.name)
+                if target_node not in correspondings:
+                    correspondings[target_node] = {target_new_node}
+                else:
+                    correspondings[target_node].add(target_new_node)
+
                 source_nodes.add(target_new_node)
                 if target_node in _BPMN__node_annotations:
                     all_new_activities[target_new_node] = _BPMN__node_annotations[target_node]
@@ -315,14 +334,19 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, current_activities, new_activ
 
                 affected_nodes_to_remove.add(target_node)
                 for n_activity in new_activities:
-                    out_flow = BPMN.Flow(n_activity, target_new_node)
-                    all_new_flows.add(out_flow)
+                    new_flow = BPMN.SequenceFlow(n_activity, target_new_node)
+                    all_new_flows.add(new_flow)
                     # bpmn_graph.add_flow(out_flow)
 
                 affected_flows_to_remove.add(flow_i)
+            else:
+                before_last_nodes.append(flow_i.source)
+                
+            #     new_flow = BPMN.Flow(n_activity, new_end)
+            #     all_new_flows.add(new_flow)
     
     if target_nodes:
-        replicate_sub_nodes(bpmn_graph, start_of_loop, target_nodes, source_nodes, flows, end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove)
+        replicate_sub_nodes(bpmn_graph, start_of_loop, target_nodes, source_nodes, flows, end, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings, before_last_nodes)
 
 
 def nested_node_generation(bpmn_graph, current_nodes, flows, affected_nodes_to_remove, end_of_loop):
@@ -349,13 +373,6 @@ def nested_node_generation(bpmn_graph, current_nodes, flows, affected_nodes_to_r
 
     if target_nodes:
         nested_node_generation(bpmn_graph, target_nodes, flows, affected_nodes_to_remove, end_of_loop)
-
-
-
-
-
-    
-
 
 
 
