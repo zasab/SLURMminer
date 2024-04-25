@@ -92,8 +92,8 @@ def generate_slurm_script_from_files():
                 arcs = processed_bpmn.__dict__['_BPMN__flows']
                 node_annotations = processed_bpmn.__dict__['_BPMN__node_annotations']
 
-                # dag = create_dag(nodes, arcs, node_annotations)
-                # storageprocessor.save_dag(dag)
+                dag = create_dag(nodes, arcs, node_annotations)
+                storageprocessor.save_dag(dag)
 
 
 
