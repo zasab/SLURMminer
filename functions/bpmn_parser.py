@@ -232,7 +232,7 @@ def process_hidden_loops(bpmn_graph):
 
         affected_nodes_to_remove.add(start_of_loop)
         affected_nodes_to_remove.add(end_of_loop)
-        new_start = BPMN.ParallelGateway(start_of_loop.id, name=start_of_loop.id)
+        new_start = BPMN.ParallelGateway(start_of_loop.name)
         
         correspondings[start_of_loop] = {new_start}
         all_new_activities[new_start] = ""
@@ -240,7 +240,7 @@ def process_hidden_loops(bpmn_graph):
             in_flow = BPMN.SequenceFlow(in_node, new_start)
             all_new_flows.add(in_flow)
 
-        new_end = BPMN.ParallelGateway(end_of_loop.id, name=end_of_loop.id)
+        new_end = BPMN.ParallelGateway(end_of_loop.name)
         correspondings[end_of_loop] = {new_end}
         all_new_activities[new_end] = ""
         for out_node in outgoings:

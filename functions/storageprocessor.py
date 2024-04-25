@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 import shutil
 import matplotlib.pyplot as plt
 import networkx as nx
+from pm4py.objects.bpmn.obj import BPMN
 
 import os
 from werkzeug.utils import secure_filename
@@ -14,12 +15,7 @@ from werkzeug.utils import secure_filename
 import hashlib
 import statistics
 import random
-
-# def generate_hash(input_str):
-#     hash_object = hashlib.md5(input_str.encode())
-#     hex_digest = hash_object.hexdigest()
-#     hash_4_digits = hex_digest[:4]
-#     return hash_4_digits
+from matplotlib.lines import Line2D
 
 def remove_dir(directory):
     try:
@@ -39,40 +35,18 @@ def save_file(file, directory):
 
     return file_path
 
-# def save_dag(dag):
-#     # Create a mapping for nodes with clearer labels
-#     node_mapping = {node: str(generate_hash(node.id)) + " " + node.name for node in dag.nodes}
-    
-#     # Relabel nodes with clearer labels
-#     dag_shortened = nx.relabel_nodes(dag, node_mapping)
-    
-#     # Draw the graph with improved appearance
-#     plt.figure(figsize=(10, 8))  # Set the figure size
-#     nx.draw(dag_shortened, with_labels=True, node_size=800, node_color="skyblue", font_size=12, font_weight="bold", edge_color="gray", linewidths=0.5)
-    
-#     # Save the graph as an image
-#     plt.savefig("dag_image.png", format="PNG", dpi=300, bbox_inches="tight")
-    
-#     # Display the graph
-#     plt.show()
 
-import networkx as nx
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import hashlib
 
 def generate_hash(input_str):
-    # Using MD5 hashing algorithm
     hash_object = hashlib.md5(input_str.encode())
-    # Get the hexadecimal digest
     hex_digest = hash_object.hexdigest()
-    # Take the first 4 characters
-    hash_4_digits = hex_digest[:4]
-    return hash_4_digits
+    hash_3_digits = hex_digest[:3]
+    return hash_3_digits
 
 def one_preds_with_sync(node, preds, dag):
     same_flag = False
     same_nodes = set()
+    same_nodes.add(node)
     for new_node in nx.topological_sort(dag):
         if new_node != node:
             new_preds = list(dag.predecessors(new_node))
@@ -96,6 +70,8 @@ def custom_layout(dag):
     y_positions = {}
     x_positions = {}
     already_assigned_position = set()
+    previous_same_nodes = set()
+
     for node in nx.topological_sort(dag):
         preds = list(dag.predecessors(node))
 
@@ -108,11 +84,15 @@ def custom_layout(dag):
                 pred_node = preds[0]
                 pred_node_position = pos[pred_node]
                 
-                number = len(same_nodes) + 1
+                number = len(same_nodes)
                 if number%2 != 0:
                     my_list = list(range(-(int(number/2)), 0)) + list(range(0, (int(number/2)) + 1))
                 else:
                     my_list = list(range(-int(number/2), 0)) + list(range(1, int(number/2) + 1))
+
+                if same_nodes != previous_same_nodes:
+                    already_assigned_position = set()
+                    previous_same_nodes = same_nodes
                 
                 picked_value = random.choice(my_list)
                 while picked_value in already_assigned_position:
@@ -121,21 +101,21 @@ def custom_layout(dag):
                 already_assigned_position.add(picked_value)
                 
                 yy = pred_node_position[1] + picked_value
-                xx = pred_node_position[0] + 1
+                xx = pred_node_position[0] + 2
                 
             else:
                 pred_node = preds[0]
                 pred_node_position = pos[pred_node]
 
-                xx = pred_node_position[0] + 1
+                xx = pred_node_position[0] + 2
                 yy = pred_node_position[1]
                 
         elif len(preds) > 1:
             same_flag, same_nodes = one_preds_with_sync(node, preds, dag)
             if same_flag:
                 print("TODO")
-            else:
-                xx = max(x_positions.values()) + 1
+            else:                
+                xx = max(x_positions.values()) + 2
                 pred_poses = []
                 for pred_node in preds:
                     pred_poses.append(pos[pred_node])
@@ -172,23 +152,31 @@ def find_y_position(dag, already_processed, preds, pos):
             
     return number_of_preds, new_y_pos
 
-
 def save_dag(dag):
-    # Create a mapping for nodes with clearer labels
     annotations = dag._node
-    node_mapping = {node: ("" if not annotations[node] else str(annotations[node]['annotations']) + " ") + str(generate_hash(node.id)) + " " + node.name for node in dag.nodes}
-    
+    node_mapping = {
+        node: (
+            (("XOR " if isinstance(node, BPMN.ExclusiveGateway) else
+            "AND " if isinstance(node, BPMN.ParallelGateway) else
+            "END " if isinstance(node, BPMN.NormalEndEvent) else
+            "START " if isinstance(node, BPMN.NormalStartEvent) else
+            "") +
+            ("" if not annotations[node] else str(annotations[node]['annotations'][0]) + "__") +
+            str(generate_hash(f"{node.id}_{type(node).__name__}")) + " " +
+            node.name)
+        ) for node in dag.nodes
+    }
     # Relabel nodes with clearer labels
     dag_shortened = nx.relabel_nodes(dag, node_mapping)
     
     # Draw the graph with improved appearance
-    plt.figure(figsize=(12, 8))  # Set the figure size
+    plt.figure(figsize=(14, 10))  # Set the figure size
     
     # Define node positions with custom layout
     pos = custom_layout(dag_shortened)
     
     # Draw nodes with different colors and sizes
-    node_size = 3500
+    node_size = 4500
     nx.draw_networkx_nodes(dag_shortened, pos, node_size=node_size, node_color="#1f78b4")
     
     # Draw node labels

@@ -70,6 +70,9 @@ def create_dag(nodes, arcs, node_annotations):
         if node in node_annotations:
             G.nodes[node]['annotations'] = node_annotations[node]
 
+    # print()
+    # print("G:  ", G.__dict__)
+    # print()
     return G
 
 
@@ -94,8 +97,6 @@ def generate_slurm_script_from_files():
 
                 dag = create_dag(nodes, arcs, node_annotations)
                 storageprocessor.save_dag(dag)
-
-
 
                 # remoteserver_info = {
                 #     "serverhost": config.remoteserver.serverhost,
