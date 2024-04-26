@@ -7,12 +7,8 @@ from werkzeug.utils import secure_filename
 import shutil
 import matplotlib.pyplot as plt
 import networkx as nx
-from pm4py.objects.bpmn.obj import BPMN
-
 import os
 from werkzeug.utils import secure_filename
-
-import hashlib
 import statistics
 import random
 from matplotlib.lines import Line2D
@@ -35,14 +31,6 @@ def save_file(file, directory):
 
     return file_path
 
-
-
-def generate_hash(input_str):
-    hash_object = hashlib.md5(input_str.encode())
-    hex_digest = hash_object.hexdigest()
-    hash_3_digits = hex_digest[:3]
-    return hash_3_digits
-
 def one_preds_with_sync(node, preds, dag):
     same_flag = False
     same_nodes = set()
@@ -54,79 +42,7 @@ def one_preds_with_sync(node, preds, dag):
                 same_nodes.add(new_node)
                 same_flag = True
 
-    return same_flag, same_nodes    
-
-def pick_and_remove_random(lst):
-    # Pick a random element from the list
-    random_element = random.choice(lst)
-    # Remove the element from the list
-    lst.remove(random_element)
-    # Return the picked element
-    return random_element
-
-
-def custom_layout(dag):
-    pos = {}
-    y_positions = {}
-    x_positions = {}
-    already_assigned_position = set()
-    previous_same_nodes = set()
-
-    for node in nx.topological_sort(dag):
-        preds = list(dag.predecessors(node))
-
-        if len(preds) == 0:
-            xx = 0
-            yy = 0
-        elif len(preds) == 1:
-            same_flag, same_nodes = one_preds_with_sync(node, preds, dag)
-            if same_flag:
-                pred_node = preds[0]
-                pred_node_position = pos[pred_node]
-                
-                number = len(same_nodes)
-                if number%2 != 0:
-                    my_list = list(range(-(int(number/2)), 0)) + list(range(0, (int(number/2)) + 1))
-                else:
-                    my_list = list(range(-int(number/2), 0)) + list(range(1, int(number/2) + 1))
-
-                if same_nodes != previous_same_nodes:
-                    already_assigned_position = set()
-                    previous_same_nodes = same_nodes
-                
-                picked_value = random.choice(my_list)
-                while picked_value in already_assigned_position:
-                    picked_value = random.choice(my_list)
-  
-                already_assigned_position.add(picked_value)
-                
-                yy = pred_node_position[1] + picked_value
-                xx = pred_node_position[0] + 2
-                
-            else:
-                pred_node = preds[0]
-                pred_node_position = pos[pred_node]
-
-                xx = pred_node_position[0] + 2
-                yy = pred_node_position[1]
-                
-        elif len(preds) > 1:
-            same_flag, same_nodes = one_preds_with_sync(node, preds, dag)
-            if same_flag:
-                print("TODO")
-            else:                
-                xx = max(x_positions.values()) + 2
-                pred_poses = []
-                for pred_node in preds:
-                    pred_poses.append(pos[pred_node])
-
-                yy = statistics.mean([pred_pose[1] for pred_pose in pred_poses])
-        
-        y_positions[node] = yy
-        x_positions[node] = xx
-        pos[node] = (xx, yy)
-    
-    return pos
+    return same_flag, same_nodes
 
 def find_y_position(dag, already_processed, preds, pos):
     new_y_pos = 0
@@ -152,45 +68,36 @@ def find_y_position(dag, already_processed, preds, pos):
             
     return number_of_preds, new_y_pos
 
+def create_dag(edges):
+    G = nx.DiGraph()
+    for edge in edges:
+        source = edge['source']
+        target = edge['target']
+        G.add_edge(source, target)
+    return G
+
 def save_dag(dag):
-    annotations = dag._node
     node_mapping = {
-        node: (
-            (("XOR " if isinstance(node, BPMN.ExclusiveGateway) else
-            "AND " if isinstance(node, BPMN.ParallelGateway) else
-            "END " if isinstance(node, BPMN.NormalEndEvent) else
-            "START " if isinstance(node, BPMN.NormalStartEvent) else
-            "") +
-            ("" if not annotations[node] else str(annotations[node]['annotations'][0]) + "__") +
-            str(generate_hash(f"{node.id}_{type(node).__name__}")) + " " +
-            node.name)
-        ) for node in dag.nodes
+        node: node.label for node in dag.nodes
     }
+
     # Relabel nodes with clearer labels
     dag_shortened = nx.relabel_nodes(dag, node_mapping)
-    
-    # Draw the graph with improved appearance
-    plt.figure(figsize=(14, 10))  # Set the figure size
-    
-    # Define node positions with custom layout
+    plt.figure(figsize=(14, 10))
     pos = custom_layout(dag_shortened)
     
-    # Draw nodes with different colors and sizes
     node_size = 4500
-    nx.draw_networkx_nodes(dag_shortened, pos, node_size=node_size, node_color="#1f78b4")
-    
-    # Draw node labels
+    node_color = "white"
     font_size = 10
-    nx.draw_networkx_labels(dag_shortened, pos, font_size=font_size, font_weight="bold")
+    nx.draw(dag_shortened, pos, with_labels=True, node_size=node_size, node_color=node_color, font_size=font_size, font_weight='bold')
     
-    # Draw edges with different styles
-    nx.draw_networkx_edges(dag_shortened, pos, width=1.0, alpha=0.7, edge_color="black")
-    
-    # Add legend for node colors
     legend_elements = [
         Line2D([0], [0], marker='o', color='w', label='Nodes', markerfacecolor='#1f78b4', markersize=10)
     ]
     plt.legend(handles=legend_elements, loc='upper right')
+
+    run_name = 'hhhhhhh'
+    plt.title(f"DAG for {run_name}")
     
     # Save the graph as an image
     plt.savefig("dag_image.png", format="PNG", dpi=300, bbox_inches="tight")
@@ -198,6 +105,61 @@ def save_dag(dag):
     # Display the graph
     plt.show()
 
+def custom_layout(dag):
+    pos = {}
+    y_positions = {}
+    x_positions = {}
+    already_assigned_position = set()
+    previous_same_nodes = set()
+
+    for node in nx.topological_sort(dag):
+        preds = list(dag.predecessors(node))
+        same_flag, same_nodes = one_preds_with_sync(node, preds, dag)
+        if len(preds) == 0:
+            xx = 0
+            yy = 0
+        else:
+            if same_flag:
+                pred_node_positions = [pos[pred_node] for pred_node in preds]
+                average_coordinate = tuple(sum(coord[i] for coord in pred_node_positions) / len(pred_node_positions) for i in range(len(pred_node_positions[0])))
+
+                number = len(same_nodes)
+                if number%2 != 0:
+                    my_list = list(range(-(int(number/2)), 0)) + list(range(0, (int(number/2)) + 1))
+                else:
+                    my_list = list(range(-int(number/2), 0)) + list(range(1, int(number/2) + 1))
+
+                if same_nodes != previous_same_nodes:
+                    already_assigned_position = set()
+                    previous_same_nodes = same_nodes
+                
+                picked_value = random.choice(my_list)
+                while picked_value in already_assigned_position:
+                    picked_value = random.choice(my_list)
+
+                already_assigned_position.add(picked_value)
+
+                yy = average_coordinate[1] + picked_value
+                xx = average_coordinate[0] + 2
+            elif len(preds) > 1:                
+                xx = max(x_positions.values()) + 2
+                pred_poses = []
+                for pred_node in preds:
+                    pred_poses.append(pos[pred_node])
+
+                yy = statistics.mean([pred_pose[1] for pred_pose in pred_poses])
+            elif len(preds) == 1:
+                pred_node = preds[0]
+                pred_node_position = pos[pred_node]
+
+                xx = pred_node_position[0] + 2
+                yy = pred_node_position[1]
+              
+        y_positions[node] = yy
+        x_positions[node] = xx
+        pos[node] = (xx, yy)
+    
+    return pos
 
 
 

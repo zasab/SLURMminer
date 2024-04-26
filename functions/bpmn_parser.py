@@ -4,6 +4,12 @@ from pm4py.objects.bpmn.importer import importer as bpmn_importer
 from lxml import etree, objectify
 import random
 from functions import BpmnUtils
+from functions import storageprocessor
+import string
+
+random_strings = set()
+def generate_random_string(length):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 def extract_bpmn_information(bpmn_file):
     bpmn_graph = bpmn_importer.apply(bpmn_file)
@@ -104,11 +110,24 @@ def process_explicit_loops(bpmn_graph):
             new_activities = list()
             new_activities.append(activity_with_loop)
             for i in range(1, rep_flow_details["random_value"]):
-                new_activity_name = activity_with_loop.name
+                
+                activity_with_loop_annot = ""
+                if activity_with_loop in _BPMN__node_annotations:
+                    activity_with_loop_annot = _BPMN__node_annotations[activity_with_loop]
+
+                random_string1 = generate_random_string(3)
+                while random_string1 in random_strings:
+                    random_string1 = generate_random_string(3)
+                
+                # new_activity_name = random_string1 + '__aff_eloop__' + activity_with_loop.name
+                new_activity_name = random_string1 + ' ' + activity_with_loop.name
+                random_strings.add(random_string1) 
+
                 new_activity = BPMN.Task(name=new_activity_name)
                 bpmn_graph.add_node(new_activity)
-                if activity_with_loop in _BPMN__node_annotations:
-                    bpmn_graph.add_node_annotation(new_activity, _BPMN__node_annotations[activity_with_loop])
+                if activity_with_loop_annot:
+                    bpmn_graph.add_node_annotation(new_activity, activity_with_loop_annot)
+
                 new_activities.append(new_activity)
 
         affected_flows_to_remove = set()
@@ -249,8 +268,10 @@ def process_hidden_loops(bpmn_graph):
         
         for com in combinations:
             con_str = [f"{key}:[{', '.join(value)}]" for key, value in com.items()]
-            new_activity_name = activity_with_iteration.name
+
+            new_activity_name = BpmnUtils.replace_placeholders(activity_with_iteration.name, com)
             new_activity = BPMN.Task(name=new_activity_name)
+
             if activity_with_iteration not in correspondings:
                 correspondings[activity_with_iteration] = {new_activity}
             else:
@@ -287,12 +308,11 @@ def process_hidden_loops(bpmn_graph):
 
     return bpmn_graph
         
-def replicate_sub_nodes(bpmn_graph, start_of_loop, current_activities, new_activities, flows, end, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings, before_last_nodes):
+def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_going_to_replicate, new_activities, flows, end, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings, before_last_nodes):
     bpmn_obj = bpmn_graph.__dict__
     _BPMN__node_annotations = bpmn_obj['_BPMN__node_annotations']
     
-    # Termination condition: Stop if end_of_loop is in current_nodes
-    if end in current_activities:
+    if end in initial_activities_that_are_going_to_replicate:
         affected_nodes_to_remove.add(end)
         return
     
@@ -306,11 +326,20 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, current_activities, new_activ
             flow_i.target == end):
             affected_flows_to_remove.add(flow_i)
 
-        if flow_i.source in current_activities:
+        if flow_i.source in initial_activities_that_are_going_to_replicate:
+            
             target_node = flow_i.target
             if target_node != end:
                 target_nodes.add(target_node)
-                target_new_node = BPMN.Task(name=target_node.name)
+
+                random_string2 = generate_random_string(3)
+                while random_string2 in random_strings:
+                    random_string2 = generate_random_string(3)
+                
+                # target_new_node_name = random_string2 + '__aff_iloop__' + target_node.name
+                target_new_node_name = random_string2 + ' ' + target_node.name
+                
+                target_new_node = BPMN.Task(name=target_new_node_name)
                 if target_node not in correspondings:
                     correspondings[target_node] = {target_new_node}
                 else:
@@ -321,22 +350,15 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, current_activities, new_activ
                     all_new_activities[target_new_node] = _BPMN__node_annotations[target_node]
                 else:
                     all_new_activities[target_new_node] = ""
-                # bpmn_graph.add_node(target_new_node)
-                # if target_node in _BPMN__node_annotations:
-                #     bpmn_graph.add_node_annotation(target_new_node, _BPMN__node_annotations[target_node])
 
                 affected_nodes_to_remove.add(target_node)
                 for n_activity in new_activities:
                     new_flow = BPMN.SequenceFlow(n_activity, target_new_node)
                     all_new_flows.add(new_flow)
-                    # bpmn_graph.add_flow(out_flow)
 
                 affected_flows_to_remove.add(flow_i)
             else:
                 before_last_nodes.append(flow_i.source)
-                
-            #     new_flow = BPMN.Flow(n_activity, new_end)
-            #     all_new_flows.add(new_flow)
     
     if target_nodes:
         replicate_sub_nodes(bpmn_graph, start_of_loop, target_nodes, source_nodes, flows, end, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings, before_last_nodes)
@@ -393,212 +415,3 @@ def process_conditions(bpmn_graph):
         bpmn_graph.remove_flow(affected_flow)
 
     return bpmn_graph
-
-# def process_split_exclusive_gateway(parsed_bpmn):
-#     bpmn_graph_obj = parsed_bpmn.__dict__
-#     nodes = bpmn_graph_obj['_BPMN__nodes']
-#     removed_nodes = set()
-#     for node in nodes.copy():
-#         if isinstance(node, BPMN.ExclusiveGateway):
-#             if node.infer_direction() == "Spliting" or node.infer_direction() == None:
-#                 removed_nodes.add(node)
-#     flows = bpmn_graph_obj['_BPMN__flows']
-#     flows_details = bpmn_graph_obj['_BPMN__flows_details']
-#     node_annotations = bpmn_graph_obj['_BPMN__node_annotations']
-#     removed_s_t_dict = dict()
-#     for r_node in removed_nodes:
-#         target_nodes = set()
-#         source_nodes = set()
-#         for flow in flows.copy():
-#             if flow.source == r_node or flow.target == r_node:
-#                 if flow.target == r_node:
-#                     source_nodes.add(flow.source)
-#                 else:
-#                     target_nodes.add(flow.target)
-#                 parsed_bpmn.remove_flow(flow)
-
-#             removed_s_t_dict[r_node] = {
-#                 "source": source_nodes,
-#                 "target": target_nodes
-#             }
-#     for r_flow in removed_s_t_dict:
-#         r_f_content = removed_s_t_dict[r_flow]
-#         for r_flow_s in r_f_content['source']:
-#             for r_flow_t in r_f_content['target']:
-#                 new_node_name = str(str(r_flow_s).split('@')[1] + "___ghost___" + str(r_flow_t).split('@')[1])
-#                 new_node = BPMN.Task(name=new_node_name)
-#                 new_node_annotations = list()
-#                 parsed_bpmn.add_node(new_node)
-#                 in_flow = BPMN.Flow(r_flow_s, new_node)
-#                 parsed_bpmn.add_flow(in_flow)
-#                 out_flow = BPMN.Flow(new_node, r_flow_t)
-#                 parsed_bpmn.add_flow(out_flow)
-
-#                 for flow_detail in flows_details:
-#                     details = flows_details[flow_detail]
-#                     if r_flow == details['source_ref'] and r_flow_t == details['target_ref']:
-#                         new_node_annotations.append(details['name'])
-                
-#                 node_annotations[str(new_node)] = new_node_annotations
-#     for node in removed_nodes:
-#         parsed_bpmn.remove_node(node)
-
-
-#     annotations = bpmn_graph_obj['_BPMN__annotations']
-
-# def process_split_parallel_gateway(parsed_bpmn):
-#     bpmn_graph_obj = parsed_bpmn.__dict__
-#     nodes = bpmn_graph_obj['_BPMN__nodes']
-
-#     removed_nodes = set()
-#     for node in nodes.copy():
-#         if isinstance(node, BPMN.ParallelGateway):
-#             if node.infer_direction() == "Spliting" or node.infer_direction() == None:
-#                 removed_nodes.add(node)
-
-#     flows = bpmn_graph_obj['_BPMN__flows']
-#     removed_s_t_dict = dict()
-#     for r_node in removed_nodes:
-#         source_nodes = set()
-#         target_nodes = set()
-#         for flow in flows.copy():
-#             if flow.source == r_node or flow.target == r_node:
-#                 if flow.target == r_node:
-#                     source_nodes.add(flow.source)
-#                 else:
-#                     target_nodes.add(flow.target)
-#                 parsed_bpmn.remove_flow(flow)
-
-#         removed_s_t_dict[r_node] = {
-#             "source": source_nodes,
-#             "target": target_nodes
-#         }
-
-#     for r_flow in removed_s_t_dict:
-#         r_f_content = removed_s_t_dict[r_flow]
-#         for r_flow_s in r_f_content['source']:
-#             for r_flow_t in r_f_content['target']:
-#                 a_flow = BPMN.Flow(r_flow_s, r_flow_t)
-#                 parsed_bpmn.add_flow(a_flow)
-
-#     for node in removed_nodes:
-#         parsed_bpmn.remove_node(node)
-
-# def process_join_parallel_gateway(parsed_bpmn, script_folder_name):
-#     bpmn_graph_obj = parsed_bpmn.__dict__
-#     nodes = bpmn_graph_obj['_BPMN__nodes']
-#     node_flow_groups = bpmn_graph_obj['node_flow_groups']
-#     flows = bpmn_graph_obj['_BPMN__flows']
-#     flows_details = bpmn_graph_obj['_BPMN__flows_details']
-#     node_annotations = bpmn_graph_obj['_BPMN__node_annotations']
-
-#     removed_nodes = set()
-#     for node in nodes.copy():
-#         if isinstance(node, BPMN.ParallelGateway):
-#             if node.infer_direction() == "Joining" or node.infer_direction() == None:
-#                 removed_nodes.add(node)
-
-#     removed_s_t_dict = dict()
-#     for r_node in removed_nodes:
-#         source_nodes = set()
-#         target_nodes = set()
-#         for flow in flows.copy():
-#             if flow.source == r_node or flow.target == r_node:
-#                 if flow.target == r_node:
-#                     source_nodes.add(flow.source)
-#                 else:
-#                     target_nodes.add(flow.target)
-#                 parsed_bpmn.remove_flow(flow)
-
-#         removed_s_t_dict[r_node] = {
-#             "source": source_nodes,
-#             "target": target_nodes
-#         }
-
-#     for r_flow in removed_s_t_dict:
-#         r_f_content = removed_s_t_dict[r_flow]
-#         new_node_name = '___fake___'
-#         new_node = BPMN.Task(name=new_node_name)
-#         new_node_annotations = list()
-#         parsed_bpmn.add_node(new_node)
-#         for r_flow_s in r_f_content['source']:
-#             in_flow = BPMN.Flow(r_flow_s, new_node)
-#             parsed_bpmn.add_flow(in_flow)
-        
-#         for r_flow_t in r_f_content['target']:
-#             out_flow = BPMN.Flow(new_node, r_flow_t)
-#             parsed_bpmn.add_flow(out_flow)
-
-#         node_flow_groups[str(new_node)] = 'and'
-        
-#         new_node_annotations.append('srun_command:{0}/{1}.py'.format(script_folder_name, new_node_name))    
-#         node_annotations[str(new_node)] = new_node_annotations
-
-#     for node in removed_nodes:
-#         parsed_bpmn.remove_node(node)
-
-# def process_join_exclusive_gateway(parsed_bpmn):
-#     bpmn_graph_obj = parsed_bpmn.__dict__
-#     nodes = bpmn_graph_obj['_BPMN__nodes']
-#     node_flow_groups = bpmn_graph_obj['node_flow_groups']
-
-#     removed_nodes = set()
-#     for node in nodes.copy():
-#         if isinstance(node, BPMN.ExclusiveGateway):
-#             if node.infer_direction() == "Joining" or node.infer_direction() == None:
-#                 removed_nodes.add(node)
-
-#     flows = bpmn_graph_obj['_BPMN__flows']
-#     removed_s_t_dict = dict()
-#     for r_node in removed_nodes:
-#         source_nodes = set()
-#         target_nodes = set()
-#         for flow in flows.copy():
-#             if flow.source == r_node or flow.target == r_node:
-#                 if flow.target == r_node:
-#                     source_nodes.add(flow.source)
-#                 else:
-#                     target_nodes.add(flow.target)
-#                 parsed_bpmn.remove_flow(flow)
-
-#         removed_s_t_dict[r_node] = {
-#             "source": source_nodes,
-#             "target": target_nodes
-#         }
-
-#     related_arcs = list()
-#     for r_flow in removed_s_t_dict:
-#         r_f_content = removed_s_t_dict[r_flow]
-#         for r_flow_t in r_f_content['target']:
-#             for r_flow_s in r_f_content['source']:
-#                 a_flow = BPMN.Flow(r_flow_s, r_flow_t)
-#                 node_flow_groups[str(r_flow_t)] = 'or'
-#                 related_arcs.append(a_flow)
-#                 parsed_bpmn.add_flow(a_flow)
-
-#     for node in removed_nodes:
-#         parsed_bpmn.remove_node(node)
-
-# def add_srun_filenames(parsed_bpmn):
-#     bpmn_graph_obj = parsed_bpmn.__dict__
-#     node_annotations = bpmn_graph_obj['_BPMN__node_annotations']
-#     for node in node_annotations:
-#         srun_filename = node.replace(' ', '_')
-#         node_annotations[node].append('srun_filename:{}'.format(srun_filename))
-
-# def pre_process_bpmn_file(parsed_bpmn, script_folder_name):
-#     bpmn_graph_obj = parsed_bpmn.__dict__
-#     bpmn_graph_obj['node_flow_groups'] = dict()
-#     process_split_parallel_gateway(parsed_bpmn)
-#     process_join_parallel_gateway(parsed_bpmn, script_folder_name)
-#     process_split_exclusive_gateway(parsed_bpmn)
-#     process_join_exclusive_gateway(parsed_bpmn)
-#     add_srun_filenames(parsed_bpmn)
-#     processed_bpmn = parsed_bpmn.__dict__
-    
-#     return processed_bpmn
-
-
-
-
-

@@ -24,6 +24,14 @@ def transform_annotations(bpmn):
     
     return transformed_annotations
 
+def replace_placeholders(input_string, parameters):
+    output_string = input_string
+    for key, value in parameters.items():
+        placeholder = '$' + key
+        output_string = output_string.replace(placeholder, value[0])
+
+    return output_string
+
 def generate_combinations(data):
     keys = list(data.keys())
     values = list(data.values())

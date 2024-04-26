@@ -19,62 +19,63 @@ from functions import SLURMprocessor
 import warnings
 warnings.filterwarnings("ignore")
 import networkx as nx
+import pm4py
+from pm4py.algo.simulation.playout.petri_net.variants import basic_playout, extensive
+import networkx as nx
+from pm4py.objects.petri_net.obj import PetriNet, Marking
 
 
 slurm_script_manager = Blueprint('slurm_script_manager', __name__)
 
-import networkx as nx
+def get_transition(net, node):
+    for tran in net.transitions:
+        if tran.label == node:
+            return tran
+        else:
+            continue
 
-# def create_dag(nodes, arcs):
-#     G = nx.DiGraph()
+def find_runs(net, im, fm):
+    sequences = basic_playout.apply(net, im, fm)
+    runs = []
+    for trace in sequences: 
+        trace_set = {event['concept:name'] for event in trace}
+        if trace_set not in runs:
+            runs.append(trace_set)
 
-#     # Create a set to store all nodes that are targets in arcs
-#     nodes_with_arcs = set()
-#     for arc in arcs:
-#         nodes_with_arcs.add(arc.target)
-#         nodes_with_arcs.add(arc.source)
+    new_runs = []
+    for run in runs:
+        new_run = set()
+        for node in run:
+            new_run.add(get_transition(net, node))
+        
+        new_runs.append(new_run)
+    return new_runs
 
-#     # Add nodes and arcs that are connected to each other
-#     for arc in arcs:
-#         # If both source and target of an arc are in the nodes_with_arcs set, add them to the graph
-#         if arc.source in nodes_with_arcs and arc.target in nodes_with_arcs:
-#             G.add_edge(arc.source, arc.target)
+def return_targets(run, arc, out_arcs, edges,net):
+    for arc2 in out_arcs:
+        if arc2.target in run:
+            new_edge = {'source': arc.source, 'target': arc2.target}
+            edges.append(new_edge)
+        else:
+            for place in net.places:
+                for in_arc in place.in_arcs:
+                    if in_arc.source == arc2.target:
+                        for out_arc in place.out_arcs:
+                            return_targets(run, arc, place.out_arcs, edges, net)
 
-#     # Remove isolated nodes from the graph
-#     G.remove_nodes_from(list(nx.isolates(G)))
-
-#     return G
-
-import networkx as nx
-
-def create_dag(nodes, arcs, node_annotations):
-    G = nx.DiGraph()
-
-    # Create a set to store all nodes that are targets in arcs
-    nodes_with_arcs = set()
+def build_edges(net, run):
+    edges = []
+    arcs =  net.arcs
     for arc in arcs:
-        nodes_with_arcs.add(arc.target)
-        nodes_with_arcs.add(arc.source)
+        if isinstance(arc.source, PetriNet.Transition) and arc.source in run:
+            target_place = arc.target    
+            out_arcs = target_place.out_arcs
+            return_targets(run, arc, out_arcs, edges, net)
 
-    # Add nodes and arcs that are connected to each other
-    for arc in arcs:
-        # If both source and target of an arc are in the nodes_with_arcs set, add them to the graph
-        if arc.source in nodes_with_arcs and arc.target in nodes_with_arcs:
-            G.add_edge(arc.source, arc.target)
+    for edge in edges:
+        print(edge)
 
-    # Remove isolated nodes from the graph
-    G.remove_nodes_from(list(nx.isolates(G)))
-
-    # Add node annotations as attributes to the graph nodes
-    for node in G.nodes:
-        if node in node_annotations:
-            G.nodes[node]['annotations'] = node_annotations[node]
-
-    # print()
-    # print("G:  ", G.__dict__)
-    # print()
-    return G
-
+    return edges
 
 
 @slurm_script_manager.route("/generate_slurm_script_from_files", methods = ["POST", "GET"])
@@ -90,27 +91,15 @@ def generate_slurm_script_from_files():
                 script_folder_zip_path = storageprocessor.save_file(script_folder_zip, config.bpmn.uploaded_files_directory)
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
+                net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
+                pm4py.view_petri_net(net, im, fm)
+                runs = find_runs(net, im, fm)
 
-                nodes = processed_bpmn.__dict__['_BPMN__nodes']
-                arcs = processed_bpmn.__dict__['_BPMN__flows']
-                node_annotations = processed_bpmn.__dict__['_BPMN__node_annotations']
+                for run in runs:
+                    edges = build_edges(net, run)
+                    dag = storageprocessor.create_dag(edges)
+                    storageprocessor.save_dag(dag)
 
-                dag = create_dag(nodes, arcs, node_annotations)
-                storageprocessor.save_dag(dag)
-
-                # remoteserver_info = {
-                #     "serverhost": config.remoteserver.serverhost,
-                #     "username": config.remoteserver.username, 
-                #     "password": config.remoteserver.password
-                # }
-                # bpmn_info = {
-                #     "filepath": bpmn_file_path,
-                #     "directorypath": config.bpmn.uploaded_files_directory
-                # }
-                # should_be_uploaded_list = main.preprocessing_bpmn(bpmn_info, local_exe_filename, remoteserver_info, script_folder_name)
-                # should_be_uploaded_list.append(scripts_dir_path)
-                # should_be_uploaded_list.append(basedir + "/general/wrap_time.sh")
-                # main.upload_and_run_exefile_on_SLURM(local_exe_filename, remoteserver_info, should_be_uploaded_list, script_folder_zip.filename)
                 return response_json({
                     "msg":  messages["success"],
                     "slurmDAG": ""
