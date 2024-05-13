@@ -16,6 +16,7 @@ from server.request import *
 from server.error_messages import messages
 from functions import storageprocessor
 from functions import SLURMprocessor
+from functions import SRunFactory
 import warnings
 warnings.filterwarnings("ignore")
 import networkx as nx
@@ -134,14 +135,17 @@ def get_job_id_from_name(task):
 
 def get_job_application_from_label(task):
     task_label = task.label
-    # print("task_label represents srun command: ", task_label)
     command = task_label.split('.')[0] if '.' in task_label else task_label
     return command.replace(" ", "_")
+
+def get_command_from_label(task):
+    return task.label
 
 def generate_dependency_script(runs, inputs_dict):
     processed_tasks = {}
     depend_script = {}
     job_ids = {}
+    should_be_uploaded_list = set()
     for index, run in runs.items():
         run_inputs = inputs_dict[index]
         for task in run:
@@ -155,7 +159,7 @@ def generate_dependency_script(runs, inputs_dict):
                     dep_str = dep_str.replace('afterok','afterany')
                     for n_input in new_inputs:
                         if n_input not in processed_tasks:
-                            add_dependency(n_input, run_inputs, depend_script, job_ids, processed_tasks, [])
+                            add_dependency(n_input, run_inputs, depend_script, job_ids, processed_tasks, [], should_be_uploaded_list)
                         
                     new_input_job_ids = [job_ids[e_in] for e_in in new_inputs]
                     
@@ -165,9 +169,9 @@ def generate_dependency_script(runs, inputs_dict):
                     new_dep_str = dep_str.replace(old_job_ids_str, new_job_ids_str)
                     depend_script[the_job_id] = new_dep_str          
             else:
-                add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, [])
+                add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, [], should_be_uploaded_list)
 
-    return depend_script
+    return depend_script, should_be_uploaded_list
 
 def extract_text_between_parentheses(text):
     # Use regular expression to find text between parentheses
@@ -175,11 +179,11 @@ def extract_text_between_parentheses(text):
     elements = [elem.strip() for match in matches for elem in match.split(',')]
     return elements, "(" + matches[0] + ")"
 
-def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list):
+def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list):
     # based on the name of the application needs to be run on SLURM and the task id we generate a unique a name for our bash file
     # that contains srun and parameter settings
     srun_file_name = get_job_id_from_name(task) + "_" + get_job_application_from_label(task) + '.sh'
-    #TODO srunfactrory
+    SRunFactory.create(srun_file_name, get_command_from_label(task), should_be_uploaded_list)
     # we also need a job id that refers to srun file in our sbatch file
     job_id = 'job_id_' + str(get_job_id_from_name(task))
 
@@ -194,7 +198,7 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
         y = run_inputs[task][0]
         if y not in job_ids:
             j_dep_list = []
-            add_dependency(y, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list)
+            add_dependency(y, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list)
 
         j_y = job_ids[y]
         depend_script[job_id] = f"--dependency:afterok({j_y}) {srun_file_name}"
@@ -203,7 +207,7 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
     else:  # multiple dependencies
         for input in run_inputs[task]:
             if input not in job_ids:
-                add_dependency(input, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list)
+                add_dependency(input, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list)
 
             processed_tasks[task] = run_inputs[task]
             j_dep_list.append(job_ids[input])
@@ -234,13 +238,16 @@ def generate_slurm_script_from_files():
                     # dag = storageprocessor.create_dag(edges)
                     # storageprocessor.save_dag(dag)
 
-                depend_script = generate_dependency_script(runs, all_inputs_dict)
-                print('----'*20)
-                for job_id_script in depend_script:
-                    print()
-                    print("job id: ", job_id_script)
-                    print("dep script: ", depend_script[job_id_script])
-                print('----'*20)
+                depend_script, should_be_uploaded_list = generate_dependency_script(runs, all_inputs_dict)
+                # print('----'*20)
+                # for job_id_script in depend_script:
+                #     print()
+                #     print("job id: ", job_id_script)
+                #     print("dep script: ", depend_script[job_id_script])
+                # print('----'*20)
+                # print()
+                # for file in should_be_uploaded_list:
+                #     print(file + "\n")
 
                 return response_json({
                     "msg":  messages["success"],

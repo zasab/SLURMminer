@@ -1,7 +1,8 @@
 from functions import BpmnUtils
 import config
 
-def srun_file_content(srun_filename, srun_command, res_file_name, REMOTE_FOLDER_NAME, REMOTE_PATH_HOME_FILE):
+
+def srun_file_content(srun_file, srun_file_name, command, REMOTE_PATH_HOME_FILE, REMOTE_FOLDER_NAME):
     text1 = """#!/usr/local_rwth/bin/zsh
 
 # Runtime and memory
@@ -17,8 +18,8 @@ def srun_file_content(srun_filename, srun_command, res_file_name, REMOTE_FOLDER_
 #### Your shell commands below this line ####
 
 export LD_LIBRARY_PATH="/usr/local_rwth/sw/python/3.8.7/x86_64/lib/:${{LD_LIBRARY_PATH}}"
-srun {1}/{2}/wrap_time.sh /usr/local_rwth/sw/python/3.8.7/x86_64/bin/python3.8 {3} "$@"
-""".format(res_file_name, REMOTE_PATH_HOME_FILE, REMOTE_FOLDER_NAME, srun_command.split(' ')[0])
+srun {1}/{2}/wrap_time.sh /usr/local_rwth/sw/python/3.8.7/x86_64/bin/python3.8 {3}
+""".format(srun_file_name[:-3], REMOTE_PATH_HOME_FILE, REMOTE_FOLDER_NAME, command)
     
     text2 = """
 if [ $? -eq 0 ]; then
@@ -30,12 +31,10 @@ else
 fi
 """
 
-    srun_filename.write(text1 + text2)
+    srun_file.write(text1 + text2)
 
-def create(processed_bpmn):
-    transformed_annotations = BpmnUtils.transform_annotations(processed_bpmn.__dict__)
-    for task, command in transformed_annotations.items():
-        srun_file_path = "{}/{}.sh".format(config.bpmn.uploaded_files_directory, task.id)
-        srun_file = open(srun_file_path, 'w')
-    #     should_be_uploaded_list.append(srun_file_path)
-        srun_file_content(srun_file, command, task.id, "TODO", "TODO")
+def create(srun_file_name, command, should_be_uploaded_list):
+    srun_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, srun_file_name)
+    should_be_uploaded_list.add(srun_file_path)
+    srun_file = open(srun_file_path, 'w')
+    srun_file_content(srun_file, srun_file_name, command, 'TODO', 'TODO')
