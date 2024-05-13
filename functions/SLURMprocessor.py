@@ -7,7 +7,7 @@ sys.path.insert(1, basedir)
 from functions import bpmn_parser
 # import random
 from functions import SRunFactory
-from functions import SBatchFactory
+from tool.functions import SBatchFactory2
 # from functions import ssh_connection
 # import pysftp
 # import config
@@ -16,19 +16,10 @@ from functions import SBatchFactory
 def preprocessing_bpmn(bpmn_file_path):
     file_name = os.path.basename(bpmn_file_path)
     bpmn_graph = bpmn_parser.extract_bpmn_information(bpmn_file_path)
-    print("------- bpmn information is extracted -------------")
     pre_processed_bpmn = bpmn_parser.pre_processing(bpmn_graph)
-    print("------- bpmn is preprocessed -------------")
     bpmn_graph_processed_explicit_loops = bpmn_parser.process_explicit_loops(pre_processed_bpmn)
-    print("------- explicit loops in bpmn is preprocessed -------------")
     bpmn_graph_processed_hidden_loops = bpmn_parser.process_hidden_loops(bpmn_graph_processed_explicit_loops)
-    print("------- hidden loops in bpmn is preprocessed -------------")
     bpmn_graph_processed_conditions = bpmn_parser.process_conditions(bpmn_graph_processed_hidden_loops)
-    print("------- SLURM conditions in bpmn is preprocessed -------------")
-    print()
-    # SRunFactory.create(bpmn_graph_processed_explicit_loops)
-    # SBatchFactory.create(processed_bpmn, should_be_uploaded_list, bpmn_info, local_exe_filename, remoteserver_info)
-    # SBatchFactory.create(bpmn_graph_processed_explicit_loops)
     return bpmn_graph_processed_conditions
 
 # def upload_and_run_exefile_on_SLURM(local_exe_filename, remoteserver_info, should_be_uploaded_list, script_folder_zip):

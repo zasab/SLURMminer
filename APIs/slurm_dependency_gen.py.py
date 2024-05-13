@@ -39,13 +39,13 @@ def generate_dependency_script(runs, inputs):
                     j_y = get_job_id(y)
                     with open(file_path, "a") as file:
                         dep = f"{j_y}"
-                        file.write(f"{j_a}=--dependency:afterok({dep}) {f_a}\n")
+                        file.write(f"{j_a}=--dependency=afterok:(${dep}) {f_a}\n")
                 elif len(in_task) > 1:
                     y_i = [in_task[i] for i in range(len(in_task))]
                     j_y_i = [get_job_id(y_i[i]) for i in range(len(in_task))]
                     with open(file_path, "a") as file:
                         dep = f"{','.join(j_y_i)}"
-                        file.write(f"{j_a}=--dependency:afterok({dep}) {f_a}\n")
+                        file.write(f"{j_a}=--dependency=afterok:(${dep}) {f_a}\n")
 
                 if task in oldInputs:
                     oldInputs[task] += in_task

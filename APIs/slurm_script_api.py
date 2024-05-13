@@ -17,6 +17,7 @@ from server.error_messages import messages
 from functions import storageprocessor
 from functions import SLURMprocessor
 from functions import SRunFactory
+from functions import SBatchFactory
 import warnings
 warnings.filterwarnings("ignore")
 import networkx as nx
@@ -96,7 +97,6 @@ def return_inputs(run, arc, in_arcs, inputs_dict ,net):
     for arc2 in in_arcs:
         source_tran = arc2.source
         if source_tran.label == None:
-            # print("silent transition .........")
             for place in net.places:
                 for out_arc in place.out_arcs:
                     if out_arc.target == source_tran:
@@ -150,23 +150,25 @@ def generate_dependency_script(runs, inputs_dict):
         run_inputs = inputs_dict[index]
         for task in run:
             if task in processed_tasks:
+                the_job_id = job_ids[task]
                 old_inputs = processed_tasks[task]
                 new_inputs = run_inputs[task]
                 if set(old_inputs) != set(new_inputs):
                     # we found a task with different inputs
-                    the_job_id = job_ids[task] 
-                    dep_str = depend_script[the_job_id]
-                    dep_str = dep_str.replace('afterok','afterany')
+                    old_dep_str = depend_script[the_job_id]
+                    old_job_ids =  extract_text_between_parentheses(old_dep_str)
                     for n_input in new_inputs:
                         if n_input not in processed_tasks:
                             add_dependency(n_input, run_inputs, depend_script, job_ids, processed_tasks, [], should_be_uploaded_list)
-                        
-                    new_input_job_ids = [job_ids[e_in] for e_in in new_inputs]
-                    
-                    old_job_ids, old_job_ids_str =  extract_text_between_parentheses(dep_str)
 
-                    new_job_ids_str = str(tuple(zip(new_input_job_ids, old_job_ids)))
-                    new_dep_str = dep_str.replace(old_job_ids_str, new_job_ids_str)
+                    new_input_job_ids = [job_ids[e_in] for e_in in new_inputs]
+                    new_input_job_ids_str = "("+ ','.join(new_input_job_ids) + ")"
+                    new_job_ids_str = "("+ new_input_job_ids_str +"?"+ str(old_job_ids) + ")"
+
+                    print()
+                    print("new_job_ids_str ----------: ", new_job_ids_str)
+                    new_dep_str = old_dep_str.replace(old_job_ids, new_job_ids_str)
+                    new_dep_str = new_dep_str.replace('afterok','afterany')
                     depend_script[the_job_id] = new_dep_str          
             else:
                 add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, [], should_be_uploaded_list)
@@ -174,10 +176,15 @@ def generate_dependency_script(runs, inputs_dict):
     return depend_script, should_be_uploaded_list
 
 def extract_text_between_parentheses(text):
-    # Use regular expression to find text between parentheses
-    matches = re.findall(r'\((.*?)\)', text)
-    elements = [elem.strip() for match in matches for elem in match.split(',')]
-    return elements, "(" + matches[0] + ")"
+    start = text.find('(')
+    end = text.rfind(')')
+    return text[start:end+1]
+
+# def extract_text_between_parentheses(text):
+#     # Use regular expression to find text between parentheses
+#     matches = re.findall(r'\((.*?)\)', text)
+#     elements = [elem.strip() for match in matches for elem in match.split(',')]
+#     return elements, "(" + matches[0] + ")"
 
 def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list):
     # based on the name of the application needs to be run on SLURM and the task id we generate a unique a name for our bash file
@@ -201,9 +208,8 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
             add_dependency(y, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list)
 
         j_y = job_ids[y]
-        depend_script[job_id] = f"--dependency:afterok({j_y}) {srun_file_name}"
+        depend_script[job_id] = f"--dependency=afterok:({j_y}) {srun_file_name}"
         processed_tasks[task] = run_inputs[task]
-
     else:  # multiple dependencies
         for input in run_inputs[task]:
             if input not in job_ids:
@@ -212,7 +218,7 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
             processed_tasks[task] = run_inputs[task]
             j_dep_list.append(job_ids[input])
 
-        depend_script[job_id] = f"--dependency:afterok({','.join(j_dep_list)}) {srun_file_name}"
+        depend_script[job_id] = f"--dependency=afterok:({','.join(j_dep_list)}) {srun_file_name}"
 
 @slurm_script_manager.route("/generate_slurm_script_from_files", methods = ["POST", "GET"])
 def generate_slurm_script_from_files():
@@ -228,7 +234,7 @@ def generate_slurm_script_from_files():
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
-                # pm4py.view_petri_net(net, im, fm)
+                pm4py.view_petri_net(net, im, fm)
                 runs = find_runs(net, im, fm)
                 all_inputs_dict = {}
                 for index, run in runs.items():
@@ -239,12 +245,12 @@ def generate_slurm_script_from_files():
                     # storageprocessor.save_dag(dag)
 
                 depend_script, should_be_uploaded_list = generate_dependency_script(runs, all_inputs_dict)
-                # print('----'*20)
-                # for job_id_script in depend_script:
-                #     print()
-                #     print("job id: ", job_id_script)
-                #     print("dep script: ", depend_script[job_id_script])
-                # print('----'*20)
+                sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
+                sbatch_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, sbatch_file_name)
+                should_be_uploaded_list.add(sbatch_file_path)
+                sbatch_file = open(sbatch_file_path, 'w')
+                SBatchFactory.create(depend_script, sbatch_file)
+                
                 # print()
                 # for file in should_be_uploaded_list:
                 #     print(file + "\n")
