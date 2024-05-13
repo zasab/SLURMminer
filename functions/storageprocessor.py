@@ -74,6 +74,14 @@ def create_dag(edges):
         source = edge['source']
         target = edge['target']
         G.add_edge(source, target)
+    
+    
+    nodes = G.__dict__['_node']
+    for node in nodes:
+        command = ' '.join([label_part for label_part in node.label.split(' ') if '__aff_eloop__' not in label_part and '__aff_iloop__' not in label_part])
+
+        nodes[node]['command'] = command
+
     return G
 
 def save_dag(dag):
@@ -86,7 +94,7 @@ def save_dag(dag):
     plt.figure(figsize=(14, 10))
     pos = custom_layout(dag_shortened)
     
-    node_size = 4500
+    node_size = 6000
     node_color = "white"
     font_size = 10
     nx.draw(dag_shortened, pos, with_labels=True, node_size=node_size, node_color=node_color, font_size=font_size, font_weight='bold')
@@ -96,8 +104,8 @@ def save_dag(dag):
     ]
     plt.legend(handles=legend_elements, loc='upper right')
 
-    run_name = 'hhhhhhh'
-    plt.title(f"DAG for {run_name}")
+    # run_name = 'hhhhhhh'
+    # plt.title(f"DAG for {run_name}")
     
     # Save the graph as an image
     plt.savefig("dag_image.png", format="PNG", dpi=300, bbox_inches="tight")

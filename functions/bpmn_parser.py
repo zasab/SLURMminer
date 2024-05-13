@@ -119,8 +119,8 @@ def process_explicit_loops(bpmn_graph):
                 while random_string1 in random_strings:
                     random_string1 = generate_random_string(3)
                 
-                # new_activity_name = random_string1 + '__aff_eloop__' + activity_with_loop.name
-                new_activity_name = random_string1 + ' ' + activity_with_loop.name
+                new_activity_name = random_string1 + '__aff_eloop__' + " " + activity_with_loop.name
+                
                 random_strings.add(random_string1) 
 
                 new_activity = BPMN.Task(name=new_activity_name)
@@ -336,8 +336,7 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
                 while random_string2 in random_strings:
                     random_string2 = generate_random_string(3)
                 
-                # target_new_node_name = random_string2 + '__aff_iloop__' + target_node.name
-                target_new_node_name = random_string2 + ' ' + target_node.name
+                target_new_node_name = random_string2 + '__aff_iloop__' + " " + target_node.name
                 
                 target_new_node = BPMN.Task(name=target_new_node_name)
                 if target_node not in correspondings:
