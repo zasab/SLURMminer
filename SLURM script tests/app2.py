@@ -1,0 +1,1 @@
+print("This is my 2 application running on a SLURM.")

@@ -7,7 +7,6 @@ sys.path.insert(1, basedir)
 from functions import bpmn_parser
 # import random
 from functions import SRunFactory
-from tool.functions import SBatchFactory2
 # from functions import ssh_connection
 # import pysftp
 # import config
