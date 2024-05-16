@@ -78,7 +78,6 @@ def create_dag(edges):
     
     nodes = G.__dict__['_node']
     for node in nodes:
-        print("----------------------------here------------------------------")
         command = ' '.join([label_part for label_part in node.label.split(' ') if '__aff_eloop__' not in label_part and '__aff_iloop__' not in label_part])
 
         nodes[node]['command'] = command
@@ -104,14 +103,6 @@ def save_dag(dag):
         Line2D([0], [0], marker='o', color='w', label='Nodes', markerfacecolor='#1f78b4', markersize=10)
     ]
     plt.legend(handles=legend_elements, loc='upper right')
-
-    # run_name = 'hhhhhhh'
-    # plt.title(f"DAG for {run_name}")
-    
-    # Save the graph as an image
-    # plt.savefig("dag_image.png", format="PNG", dpi=300, bbox_inches="tight")
-    
-    # Display the graph
     plt.show()
 
 def custom_layout(dag):

@@ -161,33 +161,86 @@ def generate_dependency_script(runs, inputs_dict):
         run_inputs = inputs_dict[index]
         for task in run:
             if task in processed_tasks:
+                
                 the_job_id = job_ids[task]
                 old_inputs = processed_tasks[task]
                 new_inputs = run_inputs[task]
                 if set(old_inputs) != set(new_inputs):
-                    # we found a task with different inputs
                     old_dep_str = depend_script[the_job_id]
-                    old_job_ids =  extract_text_between_parentheses(old_dep_str)
+                    old_job_ids, old_job_deps_str =  extract_dependencies(old_dep_str)
                     for n_input in new_inputs:
                         if n_input not in processed_tasks:
                             add_dependency(n_input, run_inputs, depend_script, job_ids, processed_tasks, [], should_be_uploaded_list)
 
                     new_input_job_ids = [job_ids[e_in] for e_in in new_inputs]
-                    new_input_job_ids_str = "("+ ','.join(new_input_job_ids) + ")"
-                    new_job_ids_str = "("+ new_input_job_ids_str +"?"+ str(old_job_ids) + ")"
-
-                    new_dep_str = old_dep_str.replace(old_job_ids, new_job_ids_str)
+                    updated_job_ids = update_job_ids(old_job_ids, new_input_job_ids)
+                    new_job_ids_str = construct_dependencies_str(updated_job_ids)
+                    new_dep_str = old_dep_str.replace(old_job_deps_str, new_job_ids_str)
                     new_dep_str = new_dep_str.replace('afterok','afterany')
-                    depend_script[the_job_id] = new_dep_str          
+                    depend_script[the_job_id] = new_dep_str     
             else:
                 add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, [], should_be_uploaded_list)
 
     return depend_script, should_be_uploaded_list
 
-def extract_text_between_parentheses(text):
-    start = text.find('(')
-    end = text.rfind(')')
-    return text[start:end+1]
+def extract_job_ids_list(text):
+    pattern = r'job_id_\d+'
+    return re.findall(pattern, text)
+
+def extract_job_deps_str(text):
+    pattern = r"\$[^\s]+"
+    return re.findall(pattern, text)[0]
+
+def extract_dependencies(input_str):
+    start = input_str.index(":") + 1
+    end = input_str[start:].index(" ") + start
+    sub_text_of_dependecies = input_str[start:end]
+    dependencies = sub_text_of_dependecies.split(',')
+
+    
+
+    striped_dependencies = []
+    for dependency in dependencies:
+        striped_dependency = dependency.replace('$', '').replace('afterany:', '').replace('afterok:', '')
+        striped_dependencies.append(striped_dependency)
+
+    
+    split_dependency_list = [item.split(":") for item in striped_dependencies]
+    striped_split_dependency_list = [[sub_item.strip() for sub_item in sublist] for sublist in split_dependency_list]
+    
+    return striped_split_dependency_list, sub_text_of_dependecies
+
+def update_job_ids(old_job_ids, new_input_job_ids):
+    for new_job_id in new_input_job_ids:
+        found = False
+        for sublist in old_job_ids:
+            if new_job_id in sublist:
+                found = True
+                break
+        if not found:
+            for sublist in old_job_ids:
+                if not any(job_id in sublist for job_id in new_input_job_ids if job_id != new_job_id):
+                    sublist.append(new_job_id)
+                    break
+    old_job_ids.sort(key=len,reverse=True)          
+    return old_job_ids
+
+def construct_dependencies_str(updated_job_ids):
+    dependencies = []
+    first_list = updated_job_ids[0]
+    
+    first_dependencies = ":".join(["$" + job_id for job_id in first_list])
+    dependencies.append(first_dependencies)
+    
+    for job_ids in updated_job_ids[1:]:
+        if len(job_ids) > 1:
+            dependency = ":".join(["$" + job_id for job_id in job_ids])
+            dependency = f"afterany:{dependency}"
+        else:
+            dependency = f"${job_ids[0]}"
+        dependencies.append(dependency)
+    
+    return ",".join(dependencies)
 
 def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list):
     # based on the name of the application needs to be run on SLURM and the task id we generate a unique a name for our bash file
@@ -211,7 +264,7 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
             add_dependency(y, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list)
 
         j_y = job_ids[y]
-        depend_script[job_id] = f"--dependency=afterok:({j_y}) {srun_file_name}"
+        depend_script[job_id] = f"--dependency=afterok:${j_y} {srun_file_name}"
         processed_tasks[task] = run_inputs[task]
     else:  # multiple dependencies
         for input in run_inputs[task]:
@@ -221,7 +274,7 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
             processed_tasks[task] = run_inputs[task]
             j_dep_list.append(job_ids[input])
 
-        depend_script[job_id] = f"--dependency=afterok:({','.join(j_dep_list)}) {srun_file_name}"
+        depend_script[job_id] = f"--dependency=afterok:{','.join(['$' + j_dep for j_dep in j_dep_list])} {srun_file_name}"
 
 @slurm_script_manager.route("/generate_slurm_script_from_files", methods = ["POST", "GET"])
 def generate_slurm_script_from_files():
@@ -237,7 +290,7 @@ def generate_slurm_script_from_files():
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
-                pm4py.view_petri_net(net, im, fm)
+                # pm4py.view_petri_net(net, im, fm)
                 runs = find_runs(net, im, fm)
                 all_inputs_dict = {}
                 for index, run in runs.items():
