@@ -6,6 +6,7 @@ import random
 from functions import BpmnUtils
 from functions import storageprocessor
 import string
+import ast
 
 random_strings = set()
 def generate_random_string(length):
@@ -74,6 +75,79 @@ def find_rep_flows(bpmn_info):
 
     return rep_flows 
 
+def process_single_value_arguments(bpmn_graph):
+    bpmn_info = bpmn_graph.__dict__
+
+    _BPMN__node_annotations = bpmn_info['_BPMN__node_annotations']
+    _BPMN__flows = bpmn_info['_BPMN__flows']
+
+    affected_nodes = set()
+    affected_flows = set()
+    new_nodes = set()
+    new_flows = set()
+    corresponding_nodes = {}
+    new_annotation_lists = {}
+    for node, arguments in _BPMN__node_annotations.items():
+        single_value_arguments_dict = {}
+        new_arguments_list = []
+        for argument in arguments:
+            argument_str = str(argument)
+            arg_parts = argument_str.split(':')
+            value_list = ast.literal_eval(arg_parts[1])
+            if len(value_list) == 1:
+                single_value_arguments_dict[arg_parts[0]] = value_list[0]
+            else:
+                new_arguments_list.append(argument)
+
+        if single_value_arguments_dict:
+            node_parts = node.name.split()
+            affected_nodes.add(node)
+            for i in range(len(node_parts)):
+                if node_parts[i].startswith('$'):
+                    key = node_parts[i][1:]  # Extract key after '$'
+                    if key in single_value_arguments_dict:
+                        node_parts[i] = str(single_value_arguments_dict[key])
+
+            new_node_command = ' '.join(node_parts)
+            new_node = BPMN.Task(name=new_node_command)
+            new_nodes.add(new_node)
+            new_annotation_lists[new_node] = new_arguments_list                
+            corresponding_nodes[node] = new_node
+        
+    for aa_node in affected_nodes:
+        for flow in _BPMN__flows:
+            if flow.source == aa_node:
+                affected_flows.add(flow)
+                if flow.target in corresponding_nodes:
+                    new_flows.add((corresponding_nodes[aa_node], corresponding_nodes[flow.target]))
+                else:
+                    new_flows.add((corresponding_nodes[aa_node], flow.target))
+            elif flow.target == aa_node:
+                affected_flows.add(flow)
+                if flow.source in corresponding_nodes:
+                    new_flows.add((corresponding_nodes[flow.source], corresponding_nodes[aa_node]))
+                else:
+                    new_flows.add((flow.source, corresponding_nodes[aa_node]))
+
+    for n_node in new_nodes:
+        bpmn_graph.add_node(n_node)
+        arg_list = new_annotation_lists[n_node]
+        if arg_list:
+            bpmn_graph.add_node_annotation(n_node, arg_list)
+
+    for n_flow in new_flows:
+        flow_obj = BPMN.SequenceFlow(n_flow[0], n_flow[1])
+        bpmn_graph.add_flow(flow_obj)
+
+    for a_node in affected_nodes:
+        bpmn_graph.remove_node(a_node)
+
+    for a_flow in affected_flows:
+        bpmn_graph.remove_flow(a_flow)
+
+    return bpmn_graph
+    
+
 def process_explicit_loops(bpmn_graph):
     bpmn_info = bpmn_graph.__dict__
     rep_flows_info = find_rep_flows(bpmn_info)
@@ -119,7 +193,7 @@ def process_explicit_loops(bpmn_graph):
                 while random_string1 in random_strings:
                     random_string1 = generate_random_string(3)
                 
-                new_activity_name = random_string1 + '__aff_eloop__' + " " + activity_with_loop.name
+                new_activity_name = random_string1 + '__aff_eloop__' + activity_with_loop.name
                 
                 random_strings.add(random_string1) 
 
@@ -180,7 +254,6 @@ def process_iterative_flow_details(flows, hidden_flow_details, _BPMN__node_annot
     needs_processed_again_flows = set()
     incomings = set()
     outgoings = set()
-
     for flow0 in flows:
         if flow0.target == start_of_loop and flow0.source != end_of_loop:
             incomings.add(flow0.source)
@@ -188,7 +261,6 @@ def process_iterative_flow_details(flows, hidden_flow_details, _BPMN__node_annot
             outgoings.add(flow0.target)
         else:
             pass
-
     for flow in flows:
         if flow.source == start_of_loop:
             activity_with_iteration = flow.target
@@ -208,7 +280,7 @@ def process_iterative_flow_details(flows, hidden_flow_details, _BPMN__node_annot
         else:
             needs_processed_again_flows.add(flow)
             continue
-
+    
     for flow2 in needs_processed_again_flows:
         if flow2.source == start_of_loop:
             activity_with_iteration = flow2.target
@@ -230,7 +302,8 @@ def process_iterative_flow_details(flows, hidden_flow_details, _BPMN__node_annot
                 needs_processed_again_flows.add(flow2)
             continue
 
-    return start_of_loop, activity_with_iteration, BpmnUtils.generate_combinations(iteration_info_dict), end_of_loop, incomings, outgoings
+    combinations = BpmnUtils.generate_combinations(iteration_info_dict)      
+    return start_of_loop, activity_with_iteration, combinations, end_of_loop, incomings, outgoings
 
 def process_hidden_loops(bpmn_graph):
     bpmn_info = bpmn_graph.__dict__
@@ -242,6 +315,7 @@ def process_hidden_loops(bpmn_graph):
     
     for hidden_flow_id, hidden_flow_details in hidden_flows.items():
         start_of_loop, activity_with_iteration, combinations, end_of_loop, incomings, outgoings = process_iterative_flow_details(flows, hidden_flow_details, _BPMN__node_annotations)
+        
         affected_flows_to_remove = set()
         affected_nodes_to_remove = set()
         all_new_activities = {}
@@ -280,8 +354,6 @@ def process_hidden_loops(bpmn_graph):
             all_new_activities[new_activity]=con_str
             new_start_flow = BPMN.SequenceFlow(new_start, new_activity)
             all_new_flows.add(new_start_flow)
-            # bpmn_graph.add_node(new_activity)
-            # bpmn_graph.add_node_annotation(new_activity, con_str)
             affected_nodes_to_remove.add(activity_with_iteration)
             replicate_sub_nodes(bpmn_graph, start_of_loop, {activity_with_iteration}, {new_activity}, flows, end_of_loop, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings, before_last_nodes)
         
@@ -327,7 +399,6 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
             affected_flows_to_remove.add(flow_i)
 
         if flow_i.source in initial_activities_that_are_going_to_replicate:
-            
             target_node = flow_i.target
             if target_node != end:
                 target_nodes.add(target_node)
@@ -336,7 +407,7 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
                 while random_string2 in random_strings:
                     random_string2 = generate_random_string(3)
                 
-                target_new_node_name = random_string2 + '__aff_iloop__' + " " + target_node.name
+                target_new_node_name = random_string2 + '__aff_iloop__' + target_node.name
                 
                 target_new_node = BPMN.Task(name=target_new_node_name)
                 if target_node not in correspondings:

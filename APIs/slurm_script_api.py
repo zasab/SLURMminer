@@ -139,7 +139,18 @@ def get_job_application_from_label(task):
     return command.replace(" ", "_")
 
 def get_command_from_label(task):
-    return task.label
+    label = task.label
+    command =  label
+    if '__aff_iloop__' in label:
+        parts = label.split('__aff_iloop__')
+        if len(parts) > 1:
+            command = parts[1]
+    elif '__aff_eloop__' in label:
+        parts = label.split('__aff_eloop__')
+        if len(parts) > 1:
+            command = parts[1]
+            
+    return command
 
 def generate_dependency_script(runs, inputs_dict):
     processed_tasks = {}
@@ -165,8 +176,6 @@ def generate_dependency_script(runs, inputs_dict):
                     new_input_job_ids_str = "("+ ','.join(new_input_job_ids) + ")"
                     new_job_ids_str = "("+ new_input_job_ids_str +"?"+ str(old_job_ids) + ")"
 
-                    print()
-                    print("new_job_ids_str ----------: ", new_job_ids_str)
                     new_dep_str = old_dep_str.replace(old_job_ids, new_job_ids_str)
                     new_dep_str = new_dep_str.replace('afterok','afterany')
                     depend_script[the_job_id] = new_dep_str          
@@ -179,12 +188,6 @@ def extract_text_between_parentheses(text):
     start = text.find('(')
     end = text.rfind(')')
     return text[start:end+1]
-
-# def extract_text_between_parentheses(text):
-#     # Use regular expression to find text between parentheses
-#     matches = re.findall(r'\((.*?)\)', text)
-#     elements = [elem.strip() for match in matches for elem in match.split(',')]
-#     return elements, "(" + matches[0] + ")"
 
 def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list):
     # based on the name of the application needs to be run on SLURM and the task id we generate a unique a name for our bash file

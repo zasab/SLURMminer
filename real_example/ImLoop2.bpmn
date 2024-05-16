@@ -35,7 +35,7 @@
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_03cfk13" sourceRef="Activity_19z4443" targetRef="Event_1sa2y8r" />
     <bpmn:sequenceFlow id="Flow_04zeggd" name="t" sourceRef="Gateway_1b6avkt" targetRef="Gateway_1n4j3jm" />
-    <bpmn:task id="Activity_0nrsaex" name="C.py">
+    <bpmn:task id="Activity_0nrsaex" name="C.py $z">
       <bpmn:incoming>Flow_1qf1kkt</bpmn:incoming>
       <bpmn:outgoing>Flow_1r8z9zq</bpmn:outgoing>
     </bpmn:task>
@@ -45,6 +45,10 @@
       <bpmn:text>t:[2,3,4]</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:association id="Association_03v2r7u" associationDirection="None" sourceRef="Activity_0gw2xb3" targetRef="TextAnnotation_1tintxg" />
+    <bpmn:textAnnotation id="TextAnnotation_0ag99m8">
+      <bpmn:text>z:['a']</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1dvuxy2" associationDirection="None" sourceRef="Activity_0nrsaex" targetRef="TextAnnotation_0ag99m8" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_023xph7">
@@ -76,6 +80,10 @@
         <dc:Bounds x="780" y="170" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1dvuxy2_di" bpmnElement="Association_1dvuxy2">
+        <di:waypoint x="839" y="170" />
+        <di:waypoint x="846" y="140" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="TextAnnotation_1tintxg_di" bpmnElement="TextAnnotation_1tintxg">
         <dc:Bounds x="580" y="120" width="100.00000678671123" height="29.997535066484435" />
         <bpmndi:BPMNLabel />
@@ -121,6 +129,10 @@
         <di:waypoint x="880" y="210" />
         <di:waypoint x="1005" y="210" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_0ag99m8_di" bpmnElement="TextAnnotation_0ag99m8">
+        <dc:Bounds x="800" y="110" width="100" height="30" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>
