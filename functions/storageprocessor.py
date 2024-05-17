@@ -17,19 +17,25 @@ def remove_dir(directory):
     try:
         if os.path.exists(directory):
             shutil.rmtree(directory)
-            # print(f"Directory '{directory}' removed successfully.")
     except OSError as e:
         print(f"Error removing directory '{directory}': {e}")
 
-def save_file(file, directory):
+def save_file(file_or_path, directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    filename = secure_filename(file.filename)
-    file_path = os.path.join(directory, filename)
-    file.save(file_path)
+    if isinstance(file_or_path, str):  # If file_or_path is a string (file path)
+        file_path = file_or_path
+        filename = os.path.basename(file_path)
+        destination_path = os.path.join(directory, filename)
+        shutil.copy(file_path, destination_path)
+    else:  # If file_or_path is a FileStorage object
+        file = file_or_path
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(directory, filename)
+        file.save(file_path)
 
-    return file_path
+    return file_path    
 
 def one_preds_with_sync(node, preds, dag):
     same_flag = False

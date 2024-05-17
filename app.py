@@ -14,6 +14,7 @@ import config
 from flask import Flask
 from APIs.navigations import navigation as navigation_blueprint
 from APIs.slurm_script_api import slurm_script_manager as slurm_script_blueprint
+from APIs.remote_connection_api import connection as remote_connection_blueprint
 import warnings
 warnings.simplefilter("ignore")
 import os
@@ -22,6 +23,7 @@ def create_app():
     app = Flask(__name__)
     app.register_blueprint(navigation_blueprint)
     app.register_blueprint(slurm_script_blueprint)
+    app.register_blueprint(remote_connection_blueprint)
     return app
 
 if __name__ == "__main__":

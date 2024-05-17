@@ -28,6 +28,10 @@
                                 <label for="password">Password</label>
                                 <input type="password" class="form-control" id="password" placeholder="Enter your password">
                             </div>
+                            <div class="form-group">
+                                <label for="twofactor">Two-Factor Code</label>
+                                <input type="text" class="form-control" id="twofactor" placeholder="Enter your two-factor code">
+                            </div>
                             <button type="button" class="btn btn-success btn-block" onclick="checkConnection()">Check Server Connection</button>
                         </form>
                     </div>
@@ -177,12 +181,14 @@
         var username = document.getElementById('username').value;
         var servername = document.getElementById('servername').value;
         var password = document.getElementById('password').value;
+        var twofactor = document.getElementById('twofactor').value;
 
         // Create data object to send in the AJAX request
         var data = {
             username: username,
             servername: servername,
-            password: password
+            password: password,
+            twofactor: twofactor
         };
 
         // Make the AJAX request using fetch

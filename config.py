@@ -26,13 +26,11 @@ class Property(object):
 general = Property()
 general.port = Config.get('GENERAL', 'port').strip()
 general.localhost = Config.get('GENERAL', 'localhost').strip()
+general.wrap_time_file = filedir + '/wrap_time.sh'
 if 'Linux' in platform.system():
     general.python_path = '/usr/bin/python3.8'
 elif 'Windows' in platform.system():
     general.python_path = 'C:\Python310\python.exe'
-if not os.path.exists(os.path.join(filedir , 'models')):
-    os.mkdir(os.path.join(filedir , 'models'))
-general.models_dir = os.path.join(filedir , 'models')
 
 
 logger = Property()
@@ -49,5 +47,7 @@ remoteserver.REMOTE_FOLDER_NAME = Config.get('SERVER', 'REMOTE_FOLDER_NAME').str
 remoteserver.REMOTE_PATH_HOME_FILE = os.path.join(filedir, Config.get('SERVER', 'REMOTE_PATH_HOME_FILE').strip())
 
 bpmn = Property()
-bpmn.uploaded_files_directory = filedir + "/" + Config.get('BPMN', 'uploaded_files_directory').strip()
 bpmn.ALLOWED_BPMN_EXTENTIONS = Config.get('BPMN', 'ALLOWED_BPMN_EXTENTIONS').strip()
+
+hpc = Property()
+hpc.hpc_files_directory = filedir + "/" + Config.get('HPC', 'hpc_files_directory').strip()

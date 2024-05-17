@@ -18,19 +18,28 @@ from functions import storageprocessor
 from functions import SLURMprocessor
 from functions import SRunFactory
 from functions import SBatchFactory
+from functions import RunWorkflowFactory
 import warnings
 warnings.filterwarnings("ignore")
 import networkx as nx
 import pm4py
-from pm4py.algo.simulation.playout.petri_net.variants import basic_playout, extensive
+from pm4py.algo.simulation.playout.petri_net.variants import basic_playout
 import networkx as nx
-from pm4py.objects.petri_net.obj import PetriNet, Marking
+from pm4py.objects.petri_net.obj import PetriNet
 import re
 import hashlib
-import ast
-
+import zipfile
+import time
+import shutil
 
 slurm_script_manager = Blueprint('slurm_script_manager', __name__)
+
+def unzip_file(zip_file_path, extract_to):
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        extracted_files = [f.filename for f in zip_ref.infolist()]
+        zip_ref.extractall(extract_to)
+
+    return extracted_files
 
 def hash_to_4_digit_number(input_string):
     # Hash the input string using SHA-256
@@ -152,11 +161,10 @@ def get_command_from_label(task):
             
     return command
 
-def generate_dependency_script(runs, inputs_dict):
+def generate_dependency_script(runs, inputs_dict, should_be_uploaded_list):
     processed_tasks = {}
     depend_script = {}
     job_ids = {}
-    should_be_uploaded_list = set()
     for index, run in runs.items():
         run_inputs = inputs_dict[index]
         for task in run:
@@ -284,9 +292,20 @@ def generate_slurm_script_from_files():
             if 'bpmn_file' in files and 'script_folder_zip' in files:
                 bpmn_file = files["bpmn_file"]
                 script_folder_zip = files["script_folder_zip"]
-                storageprocessor.remove_dir(config.bpmn.uploaded_files_directory)
-                bpmn_file_path = storageprocessor.save_file(bpmn_file, config.bpmn.uploaded_files_directory)
-                script_folder_zip_path = storageprocessor.save_file(script_folder_zip, config.bpmn.uploaded_files_directory)
+
+                storageprocessor.remove_dir(config.hpc.hpc_files_directory)
+                should_be_uploaded_list = set()
+
+                bpmn_file_path = storageprocessor.save_file(bpmn_file, config.hpc.hpc_files_directory)
+                script_folder_zip_path = storageprocessor.save_file(script_folder_zip, config.hpc.hpc_files_directory)
+
+                extracted_files = unzip_file(script_folder_zip_path, config.hpc.hpc_files_directory)
+                for e_file in extracted_files:
+                    e_file_path = "{}/{}".format(config.hpc.hpc_files_directory, e_file)
+                    should_be_uploaded_list.add(e_file_path)
+
+                wrap_time_file_path = storageprocessor.save_file(config.general.wrap_time_file, config.hpc.hpc_files_directory)
+                should_be_uploaded_list.add(wrap_time_file_path)
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
@@ -300,16 +319,18 @@ def generate_slurm_script_from_files():
                     # dag = storageprocessor.create_dag(edges)
                     # storageprocessor.save_dag(dag)
 
-                depend_script, should_be_uploaded_list = generate_dependency_script(runs, all_inputs_dict)
+                depend_script, should_be_uploaded_list = generate_dependency_script(runs, all_inputs_dict, should_be_uploaded_list)
+                
                 sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
-                sbatch_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, sbatch_file_name)
+                sbatch_file_path = "{}/{}".format(config.hpc.hpc_files_directory, sbatch_file_name)
                 should_be_uploaded_list.add(sbatch_file_path)
                 sbatch_file = open(sbatch_file_path, 'w')
                 SBatchFactory.create(depend_script, sbatch_file)
-                
-                # print()
-                # for file in should_be_uploaded_list:
-                #     print(file + "\n")
+
+                run_workflow_file_path = "{}/{}".format(config.hpc.hpc_files_directory, 'run_workflow.sh')
+                RunWorkflowFactory.create(run_workflow_file_path, sbatch_file_name)
+                should_be_uploaded_list.add(run_workflow_file_path)                   
+                    
 
                 return response_json({
                     "msg":  messages["success"],

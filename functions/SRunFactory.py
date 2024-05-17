@@ -2,7 +2,7 @@ from functions import BpmnUtils
 import config
 
 
-def srun_file_content(srun_file, srun_file_name, command, REMOTE_PATH_HOME_FILE, REMOTE_FOLDER_NAME):
+def srun_file_content(srun_file, srun_file_name, command):
     text1 = """#!/usr/local_rwth/bin/zsh
 
 # Runtime and memory
@@ -17,9 +17,15 @@ def srun_file_content(srun_file, srun_file_name, command, REMOTE_PATH_HOME_FILE,
 
 #### Your shell commands below this line ####
 
+# Set a reasonable RLIMIT_NPROC
+ulimit -u 10000
+
+CURRENT_DIR=$(pwd)
+PYTHON_PATH=$(which python3)
+
 export LD_LIBRARY_PATH="/usr/local_rwth/sw/python/3.8.7/x86_64/lib/:${{LD_LIBRARY_PATH}}"
-srun {1}/{2}/wrap_time.sh /usr/local_rwth/sw/python/3.8.7/x86_64/bin/python3.8 {3}
-""".format(srun_file_name[:-3], REMOTE_PATH_HOME_FILE, REMOTE_FOLDER_NAME, command)
+srun ${{CURRENT_DIR}}/wrap_time.sh ${{PYTHON_PATH}} {1}
+""".format(srun_file_name[:-3], command)
     
     text2 = """
 if [ $? -eq 0 ]; then
@@ -34,7 +40,7 @@ fi
     srun_file.write(text1 + text2)
 
 def create(srun_file_name, command, should_be_uploaded_list):
-    srun_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, srun_file_name)
+    srun_file_path = "{}/{}".format(config.hpc.hpc_files_directory, srun_file_name)
     should_be_uploaded_list.add(srun_file_path)
     srun_file = open(srun_file_path, 'w')
-    srun_file_content(srun_file, srun_file_name, command, 'TODO', 'TODO')
+    srun_file_content(srun_file, srun_file_name, command)
