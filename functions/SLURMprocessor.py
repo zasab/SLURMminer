@@ -21,11 +21,11 @@ def preprocessing_bpmn(bpmn_file_path):
     print("process_single_value_arguments is finished....")
     bpmn_graph_processed_explicit_loops = bpmn_parser.process_explicit_loops(bpmn_graph_processed_single_value_arguments)
     print("process_explicit_loops is finished....")
-    bpmn_graph_processed_hidden_loops = bpmn_parser.process_hidden_loops(bpmn_graph_processed_explicit_loops)
-    print("process_hidden_loops is finished....")
-    bpmn_graph_processed_conditions = bpmn_parser.process_conditions(bpmn_graph_processed_hidden_loops)
+    bpmn_graph_processed_conditions = bpmn_parser.process_conditions(bpmn_graph_processed_explicit_loops)
     print("process_conditions is finished....")
-    return bpmn_graph_processed_conditions
+    bpmn_graph_processed_hidden_loops = bpmn_parser.process_hidden_loops(bpmn_graph_processed_conditions)
+    print("process_hidden_loops is finished....")
+    return bpmn_graph_processed_hidden_loops
 
 # def upload_and_run_exefile_on_SLURM(local_exe_filename, remoteserver_info, should_be_uploaded_list, script_folder_zip):
 #     try:
