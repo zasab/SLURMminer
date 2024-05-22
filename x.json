@@ -1,0 +1,15 @@
+{
+    Gateway_021olsu@ -> Gateway_1mxk3f5@,
+    Gateway_1mxk3f5@ -> Activity_01k9m0c@A.py $t,
+    Activity_01k9m0c@A.py $t -> Gateway_1ettgsv@,
+    Gateway_1ettgsv@ -> Activity_18v7eda@C.py,
+    Activity_18v7eda@C.py -> Gateway_0uduun3@,
+    Gateway_1ettgsv@ -> Activity_0bnfukf@B.py,
+    Activity_0bnfukf@B.py -> id822feab3-e5d2-4e0a-9069-b9e054175ec0@tIX__aff_eloop__B.py,
+    id822feab3-e5d2-4e0a-9069-b9e054175ec0@tIX__aff_eloop__B.py -> Gateway_0uduun3@,
+    Gateway_0uduun3@ -> Gateway_021olsu@,
+    Gateway_021olsu@ -> Event_03ldm4t@
+
+    Event_1cot8mn@ -> Gateway_1mxk3f5@,
+    
+}

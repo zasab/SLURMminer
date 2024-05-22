@@ -3,14 +3,8 @@ from os.path import dirname, abspath
 filedir = dirname(abspath(__file__))
 basedir = dirname(dirname(abspath(__file__)))
 sys.path.insert(1, basedir)
-# from werkzeug.utils import secure_filename
+
 from functions import bpmn_parser
-# import random
-from functions import SRunFactory
-# from functions import ssh_connection
-# import pysftp
-# import config
-# from functions.file_management import get_value
 
 def preprocessing_bpmn(bpmn_file_path):
     bpmn_graph = bpmn_parser.extract_bpmn_information(bpmn_file_path)
@@ -23,9 +17,9 @@ def preprocessing_bpmn(bpmn_file_path):
     print("process_explicit_loops is finished....")
     bpmn_graph_processed_hidden_loops = bpmn_parser.process_hidden_loops(bpmn_graph_processed_explicit_loops)
     print("process_hidden_loops is finished....")
-    bpmn_graph_processed_conditions = bpmn_parser.process_conditions(bpmn_graph_processed_hidden_loops)
+    # bpmn_graph_processed_conditions = bpmn_parser.process_conditions(bpmn_graph_processed_hidden_loops)
     print("process_conditions is finished....")
-    return bpmn_graph_processed_conditions
+    return bpmn_graph_processed_hidden_loops
 
 # def upload_and_run_exefile_on_SLURM(local_exe_filename, remoteserver_info, should_be_uploaded_list, script_folder_zip):
 #     try:

@@ -150,15 +150,16 @@ def get_job_application_from_label(task):
 def get_command_from_label(task):
     label = task.label
     command =  label
-    if '__aff_iloop__' in label:
-        parts = label.split('__aff_iloop__')
-        if len(parts) > 1:
-            command = parts[1]
-    elif '__aff_eloop__' in label:
-        parts = label.split('__aff_eloop__')
-        if len(parts) > 1:
-            command = parts[1]
-            
+    e_index = label.rfind('__aff_eloop__')
+    i_index = label.rfind('__aff_iloop__')
+    len_str = len('__aff_eloop__')
+
+    if e_index == -1 and i_index != -1:
+        command = label[i_index+len_str:]
+        
+    if e_index != -1:
+        command = label[e_index+len_str:]
+    
     return command
 
 def generate_dependency_script(runs, inputs_dict, should_be_uploaded_list):
@@ -293,7 +294,9 @@ def generate_slurm_script_from_files():
                 bpmn_file = files["bpmn_file"]
                 script_folder_zip = files["script_folder_zip"]
 
+                print("hpc_files_directory before remove ----------------------------")
                 storageprocessor.remove_dir(config.hpc.hpc_files_directory)
+                print("hpc_files_directory after remove ----------------------------")
                 should_be_uploaded_list = set()
 
                 bpmn_file_path = storageprocessor.save_file(bpmn_file, config.hpc.hpc_files_directory)
@@ -308,28 +311,30 @@ def generate_slurm_script_from_files():
                 should_be_uploaded_list.add(wrap_time_file_path)
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
+                print("finished .....")
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
-                # pm4py.view_petri_net(net, im, fm)
-                runs = find_runs(net, im, fm)
-                all_inputs_dict = {}
-                for index, run in runs.items():
-                    edges = build_edges(net, run)
-                    inputs_dict = inputs(net, run)
-                    all_inputs_dict[index] = inputs_dict
-                    # dag = storageprocessor.create_dag(edges)
-                    # storageprocessor.save_dag(dag)
+                pm4py.view_petri_net(net, im, fm)
+                print("petrinet showed .....")
+                # runs = find_runs(net, im, fm)
+                # all_inputs_dict = {}
+                # for index, run in runs.items():
+                #     edges = build_edges(net, run)
+                #     inputs_dict = inputs(net, run)
+                #     all_inputs_dict[index] = inputs_dict
+                #     # dag = storageprocessor.create_`dag(edges)
+                #     # storageprocessor.save_dag(dag)`
 
-                depend_script, should_be_uploaded_list = generate_dependency_script(runs, all_inputs_dict, should_be_uploaded_list)
+                # depend_script, should_be_uploaded_list = generate_dependency_script(runs, all_inputs_dict, should_be_uploaded_list)
                 
-                sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
-                sbatch_file_path = "{}/{}".format(config.hpc.hpc_files_directory, sbatch_file_name)
-                should_be_uploaded_list.add(sbatch_file_path)
-                sbatch_file = open(sbatch_file_path, 'w')
-                SBatchFactory.create(depend_script, sbatch_file)
+                # sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
+                # sbatch_file_path = "{}/{}".format(config.hpc.hpc_files_directory, sbatch_file_name)
+                # should_be_uploaded_list.add(sbatch_file_path)
+                # sbatch_file = open(sbatch_file_path, 'w')
+                # SBatchFactory.create(depend_script, sbatch_file)
 
-                run_workflow_file_path = "{}/{}".format(config.hpc.hpc_files_directory, 'run_workflow.sh')
-                RunWorkflowFactory.create(run_workflow_file_path, sbatch_file_name)
-                should_be_uploaded_list.add(run_workflow_file_path)                   
+                # run_workflow_file_path = "{}/{}".format(config.hpc.hpc_files_directory, 'run_workflow.sh')
+                # RunWorkflowFactory.create(run_workflow_file_path, sbatch_file_name)
+                # should_be_uploaded_list.add(run_workflow_file_path)                   
                     
 
                 return response_json({
