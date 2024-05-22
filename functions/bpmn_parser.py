@@ -409,7 +409,13 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
                 
                 target_new_node_name = random_string2 + '__aff_iloop__' + target_node.name
                 
-                target_new_node = BPMN.Task(name=target_new_node_name)
+                if isinstance(target_node, BPMN.ParallelGateway):
+                    target_new_node = BPMN.ParallelGateway(name=target_new_node_name)
+                elif isinstance(target_node, BPMN.ExclusiveGateway):
+                    target_new_node = BPMN.ExclusiveGateway(name=target_new_node_name)
+                else:
+                    target_new_node = BPMN.Task(name=target_new_node_name)
+
                 if target_node not in correspondings:
                     correspondings[target_node] = {target_new_node}
                 else:

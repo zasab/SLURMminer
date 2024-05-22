@@ -290,7 +290,7 @@ def generate_slurm_script_from_files():
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
-                # pm4py.view_petri_net(net, im, fm)
+                pm4py.view_petri_net(net, im, fm)
                 runs = find_runs(net, im, fm)
                 all_inputs_dict = {}
                 for index, run in runs.items():
