@@ -51,3 +51,6 @@ remoteserver.REMOTE_PATH_HOME_FILE = os.path.join(filedir, Config.get('SERVER', 
 bpmn = Property()
 bpmn.uploaded_files_directory = filedir + "/" + Config.get('BPMN', 'uploaded_files_directory').strip()
 bpmn.ALLOWED_BPMN_EXTENTIONS = Config.get('BPMN', 'ALLOWED_BPMN_EXTENTIONS').strip()
+
+hpc = Property()
+hpc.hpc_files_directory = filedir + "/" + Config.get('HPC', 'hpc_files_directory').strip()

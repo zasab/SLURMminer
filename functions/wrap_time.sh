@@ -18,4 +18,3 @@ echo "Start: $start" > times/$SLURM_JOB_ID.time
 echo "End: $end" >> times/$SLURM_JOB_ID.time
 echo "Duration: $duration" >> times/$SLURM_JOB_ID.time
 exit $rc
-
