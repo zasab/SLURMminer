@@ -3,14 +3,7 @@ from os.path import dirname, abspath
 filedir = dirname(abspath(__file__))
 basedir = dirname(dirname(abspath(__file__)))
 sys.path.insert(1, basedir)
-# from werkzeug.utils import secure_filename
 from functions import bpmn_parser
-# import random
-from functions import SRunFactory
-# from functions import ssh_connection
-# import pysftp
-# import config
-# from functions.file_management import get_value
 
 def preprocessing_bpmn(bpmn_file_path):
     bpmn_graph = bpmn_parser.extract_bpmn_information(bpmn_file_path)

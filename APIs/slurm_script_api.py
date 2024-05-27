@@ -16,7 +16,7 @@ from server.request import *
 from server.error_messages import messages
 from functions import storageprocessor
 from functions import SLURMprocessor
-from functions import SRunFactory
+from functions import SRunFactory_new
 from functions import SBatchFactory
 import warnings
 warnings.filterwarnings("ignore")
@@ -27,7 +27,6 @@ import networkx as nx
 from pm4py.objects.petri_net.obj import PetriNet, Marking
 import re
 import hashlib
-import ast
 
 
 slurm_script_manager = Blueprint('slurm_script_manager', __name__)
@@ -128,7 +127,7 @@ def inputs(net, run):
 
     return inputs_dict
 
-def get_job_id_from_name(task):
+def get_unique_number_added_to_job_id(task):
     task_name = task.name
     task_name1 = task_name.replace(" ", "_")
     return str(hash_to_4_digit_number(task_name1))
@@ -136,7 +135,12 @@ def get_job_id_from_name(task):
 def get_job_application_from_label(task):
     task_label = task.label
     command = task_label.split('.')[0] if '.' in task_label else task_label
-    return command.replace(" ", "_")
+    command_parts = command.split('=')
+    if len(command_parts)>1:
+        result = command_parts[1].replace(" ", "_")
+    else:
+        result = command_parts[0].replace(" ", "_")
+    return result
 
 def get_command_from_label(task):
     label = task.label
@@ -149,8 +153,15 @@ def get_command_from_label(task):
         parts = label.split('__aff_eloop__')
         if len(parts) > 1:
             command = parts[1]
-            
-    return command
+    
+    command_parts = command.split('=')
+    if len(command_parts)>1:
+        command = command_parts[1].strip()
+        output = command_parts[0].strip()
+    else:
+        command = command_parts[0].strip()
+        output = None
+    return command, output
 
 def generate_dependency_script(runs, inputs_dict):
     processed_tasks = {}
@@ -245,10 +256,11 @@ def construct_dependencies_str(updated_job_ids):
 def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list):
     # based on the name of the application needs to be run on SLURM and the task id we generate a unique a name for our bash file
     # that contains srun and parameter settings
-    srun_file_name = get_job_id_from_name(task) + "_" + get_job_application_from_label(task) + '.sh'
-    SRunFactory.create(srun_file_name, get_command_from_label(task), should_be_uploaded_list)
+    srun_file_name = get_unique_number_added_to_job_id(task) + "_" + get_job_application_from_label(task) + '.sh'
+    command, output = get_command_from_label(task)
+    SRunFactory_new.create(srun_file_name, command, should_be_uploaded_list)
     # we also need a job id that refers to srun file in our sbatch file
-    job_id = 'job_id_' + str(get_job_id_from_name(task))
+    job_id = 'job_id_' + str(get_unique_number_added_to_job_id(task))
 
     if job_id not in job_ids:
         job_ids[task] = job_id
@@ -290,7 +302,7 @@ def generate_slurm_script_from_files():
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
-                pm4py.view_petri_net(net, im, fm)
+                # pm4py.view_petri_net(net, im, fm)
                 runs = find_runs(net, im, fm)
                 all_inputs_dict = {}
                 for index, run in runs.items():

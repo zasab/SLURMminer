@@ -81,6 +81,7 @@ def process_single_value_arguments(bpmn_graph):
     _BPMN__node_annotations = bpmn_info['_BPMN__node_annotations']
     _BPMN__flows = bpmn_info['_BPMN__flows']
 
+    print("step 1")
     affected_nodes = set()
     affected_flows = set()
     new_nodes = set()
@@ -88,17 +89,24 @@ def process_single_value_arguments(bpmn_graph):
     corresponding_nodes = {}
     new_annotation_lists = {}
     for node, arguments in _BPMN__node_annotations.items():
+        print("step 2")
         single_value_arguments_dict = {}
         new_arguments_list = []
         for argument in arguments:
+            print("step 2")
             argument_str = str(argument)
+            print("step 2")
             arg_parts = argument_str.split(':')
+            print("step 2")
             value_list = ast.literal_eval(arg_parts[1])
             if len(value_list) == 1:
+                print("step 2")
                 single_value_arguments_dict[arg_parts[0]] = value_list[0]
             else:
+                print("step 2")
                 new_arguments_list.append(argument)
 
+        print("step 3")
         if single_value_arguments_dict:
             node_parts = node.name.split()
             affected_nodes.add(node)
@@ -113,7 +121,8 @@ def process_single_value_arguments(bpmn_graph):
             new_nodes.add(new_node)
             new_annotation_lists[new_node] = new_arguments_list                
             corresponding_nodes[node] = new_node
-        
+
+    print("step 4")    
     for aa_node in affected_nodes:
         for flow in _BPMN__flows:
             if flow.source == aa_node:
@@ -128,7 +137,8 @@ def process_single_value_arguments(bpmn_graph):
                     new_flows.add((corresponding_nodes[flow.source], corresponding_nodes[aa_node]))
                 else:
                     new_flows.add((flow.source, corresponding_nodes[aa_node]))
-
+    
+    print("step 5")
     for n_node in new_nodes:
         bpmn_graph.add_node(n_node)
         arg_list = new_annotation_lists[n_node]
