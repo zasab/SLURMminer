@@ -25,14 +25,18 @@ class Counts:
 
 def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_dict, flows_name, nodes_dict, nodes_bounds,
                   flow_info, data_object_ref_dict,
-                  process=None, node=None, bpmn_element=None, flow=None, rec_depth=0):
+                  process=None, node=None, bpmn_element=None, 
+                  flow=None, rec_depth=0):
     """
     Parses a BPMN element from the XML file
     """
     tag = curr_el.tag.lower()
+    data_input_associations={} 
+    data_output_associations={}
     if tag.endswith("subprocess"): # subprocess invocation
         name = curr_el.get("name").replace("\r", "").replace("\n", "") if "name" in curr_el.attrib else ""
         subprocess = BPMN.SubProcess(id=curr_el.get("id"), name=name, process=process, depth=rec_depth)
+        
         bpmn_graph.add_node(subprocess)
         node = subprocess
         process = curr_el.get("id")
@@ -59,12 +63,24 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
                 for sub_child in child:
                     if sub_child.tag.lower().endswith("sourceref"):
                         data_input_associations[node_str].append(sub_child.text)
+                        if sub_child.text in data_object_ref_dict:
+                            data_object_attr = data_object_ref_dict[sub_child.text]
+                            data_object_attr['targetRef'] = id
+                        else:
+                            data_object_ref_dict[sub_child.text] = {'targetRef':id}
+                            
             elif child.tag.lower().endswith("dataoutputassociation"):
                 if node_str not in data_output_associations:
                     data_output_associations[node_str] = []
                 for sub_child in child:
                     if sub_child.tag.lower().endswith("targetref"):
-                        data_output_associations[node_str].append(sub_child.text)  
+                        data_output_associations[node_str].append(sub_child.text)
+                        if sub_child.text in data_object_ref_dict:
+                            data_object_attr = data_object_ref_dict[sub_child.text]
+                            data_object_attr['sourceRef'] = id
+                        else:
+                            data_object_ref_dict[sub_child.text] = {'sourceRef':id}
+
     elif tag.endswith("startevent"): # start node starting the (sub)process
         id = curr_el.get("id")
         name = curr_el.get("name").replace("\r", " ").replace("\n", " ") if "name" in curr_el.attrib else ""
@@ -77,6 +93,7 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
                 start_event = BPMN.NormalStartEvent(id=curr_el.get("id"), name=name, process=process)
         else:
             start_event = BPMN.NormalStartEvent(id=curr_el.get("id"), name=name, process=process)
+        
         bpmn_graph.add_node(start_event)
         node = start_event
         nodes_dict[id] = node
@@ -117,6 +134,7 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
                 intermediate_catch_event = BPMN.IntermediateCatchEvent(id=curr_el.get("id"), name=name, process=process)
         else:
             intermediate_catch_event = BPMN.IntermediateCatchEvent(id=curr_el.get("id"), name=name, process=process)
+        
         bpmn_graph.add_node(intermediate_catch_event)
         node = intermediate_catch_event
         nodes_dict[id] = node
@@ -132,6 +150,7 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
                 intermediate_throw_event = BPMN.NormalIntermediateThrowEvent(id=curr_el.get("id"), name=name, process=process)
         else:
             intermediate_throw_event = BPMN.NormalIntermediateThrowEvent(id=curr_el.get("id"), name=name, process=process)
+        
         bpmn_graph.add_node(intermediate_throw_event)
         node = intermediate_throw_event
         nodes_dict[id] = node
@@ -152,6 +171,7 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
                 boundary_event = BPMN.BoundaryEvent(id=curr_el.get("id"), name=name, process=process, activity=ref_activity)
         else:
             boundary_event = BPMN.BoundaryEvent(id=curr_el.get("id"), name=name, process=process, activity=ref_activity)
+        
         bpmn_graph.add_node(boundary_event)
         node = boundary_event
         nodes_dict[id] = node
@@ -166,6 +186,7 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
             exclusive_gateway = BPMN.ExclusiveGateway(id=curr_el.get("id"), name=name, gateway_direction=direction, process=process)
         except:
             exclusive_gateway = BPMN.ExclusiveGateway(id=curr_el.get("id"), name=name, gateway_direction=BPMN.Gateway.Direction.UNSPECIFIED, process=process)
+        
         bpmn_graph.add_node(exclusive_gateway)
         node = exclusive_gateway
         nodes_dict[id] = node
@@ -177,6 +198,7 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
             parallel_gateway = BPMN.ParallelGateway(id=curr_el.get("id"), name=name, gateway_direction=direction, process=process)
         except:
             parallel_gateway = BPMN.ParallelGateway(id=curr_el.get("id"), name=name, gateway_direction=BPMN.Gateway.Direction.UNSPECIFIED, process=process)
+        
         bpmn_graph.add_node(parallel_gateway)
         node = parallel_gateway
         nodes_dict[id] = node
@@ -188,6 +210,7 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
             inclusive_gateway = BPMN.InclusiveGateway(id=curr_el.get("id"), name=name, gateway_direction=direction, process=process)
         except:
             inclusive_gateway = BPMN.InclusiveGateway(id=curr_el.get("id"), name=name, gateway_direction=BPMN.Gateway.Direction.UNSPECIFIED, process=process)
+        
         bpmn_graph.add_node(inclusive_gateway)
         node = inclusive_gateway
         nodes_dict[id] = node
@@ -236,7 +259,14 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
     elif tag.endswith("dataobjectreference"):
         id = curr_el.get("id")
         name = curr_el.get("name").replace("\r", "").replace("\n", "") if "name" in curr_el.attrib else ""
-        data_object_ref_dict[id] = BPMN.DataObjectReference(id=id, name=name, process=process)
+        
+        if id in data_object_ref_dict:
+            data_object_attr = data_object_ref_dict[id]
+            data_object_attr['name'] = name
+        else:
+            data_object_ref_dict[id] = {'name':name}
+        
+        
     elif tag.endswith("label"): # label of a node, mostly at the end of a shape object
         bpmn_element = None
     elif tag.endswith("bounds"): # contains information of width, height, x, y of a node
@@ -280,6 +310,30 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
                 node.set_y(bounds["y"])
                 node.set_width(bounds["width"])
                 node.set_height(bounds["height"])
+
+        for data_obj in data_object_ref_dict:
+            id = data_obj
+            data_obj_details = data_object_ref_dict[id]
+            if 'name' in data_obj_details:
+                name = data_obj_details['name']
+            else:
+                name = ""
+
+            if 'targetRef' in data_obj_details:
+                targetRef = data_obj_details['targetRef']
+            else:
+                targetRef = ""
+
+            if 'sourceRef' in data_obj_details:
+                sourceRef = data_obj_details['sourceRef']
+            else:
+                sourceRef = ""
+                
+            bpmn_data_obj_ = BPMN.DataObjectReference(id=data_obj, name=name, 
+                                                      process=process, sourceRef=sourceRef,
+                                                      targetRef=targetRef)
+            
+            bpmn_graph.add_data_obj(bpmn_data_obj_)
     
     return bpmn_graph
 

@@ -8,6 +8,7 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(script_dir, 'logs', sys.argv[1])
+log_path = os.path.join(script_dir, 'logs', sys.argv[1])
 
-print(file_path)
+with open('log_path.txt', 'w') as file:
+    file.write("log_path\n")

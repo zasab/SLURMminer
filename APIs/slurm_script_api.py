@@ -18,6 +18,7 @@ from functions import storageprocessor
 from functions import SLURMprocessor
 from functions import SRunFactory_new
 from functions import SBatchFactory
+from functions import graphObject
 import warnings
 warnings.filterwarnings("ignore")
 import networkx as nx
@@ -32,15 +33,9 @@ import hashlib
 slurm_script_manager = Blueprint('slurm_script_manager', __name__)
 
 def hash_to_4_digit_number(input_string):
-    # Hash the input string using SHA-256
     hashed = hashlib.sha256(input_string.encode()).hexdigest()
-    
-    # Take the first 4 characters of the hashed string
     first_4_chars = hashed[:4]
-    # Convert hexadecimal string to decimal integer
     decimal_number = int(first_4_chars, 16)
-    
-    # Take modulo to ensure it's within the range of 4-digit numbers (0000 to 9999)
     four_digit_number = decimal_number % 10000
     
     return four_digit_number
@@ -140,6 +135,7 @@ def get_job_application_from_label(task):
         result = command_parts[1].replace(" ", "_")
     else:
         result = command_parts[0].replace(" ", "_")
+
     return result
 
 def get_command_from_label(task):
@@ -260,6 +256,7 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
     command, output = get_command_from_label(task)
     SRunFactory_new.create(srun_file_name, command, should_be_uploaded_list)
     # we also need a job id that refers to srun file in our sbatch file
+
     job_id = 'job_id_' + str(get_unique_number_added_to_job_id(task))
 
     if job_id not in job_ids:
@@ -302,6 +299,16 @@ def generate_slurm_script_from_files():
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
+
+                
+                print()
+                print()
+                print()
+                print(processed_bpmn.__dict__)
+                print()
+                print()
+                print()
+
                 # pm4py.view_petri_net(net, im, fm)
                 runs = find_runs(net, im, fm)
                 all_inputs_dict = {}
@@ -313,15 +320,17 @@ def generate_slurm_script_from_files():
                     # storageprocessor.save_dag(dag)
 
                 depend_script, should_be_uploaded_list = generate_dependency_script(runs, all_inputs_dict)
-                sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
-                sbatch_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, sbatch_file_name)
-                should_be_uploaded_list.add(sbatch_file_path)
-                sbatch_file = open(sbatch_file_path, 'w')
-                SBatchFactory.create(depend_script, sbatch_file)
+                # sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
+                # sbatch_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, sbatch_file_name)
+                # should_be_uploaded_list.add(sbatch_file_path)
+                # sbatch_file = open(sbatch_file_path, 'w')
+                # SBatchFactory.create(depend_script, sbatch_file)
                 
-                # print()
-                # for file in should_be_uploaded_list:
-                #     print(file + "\n")
+                # # print()
+                # # for file in should_be_uploaded_list:
+                # #     print(file + "\n")
+
+                graphObject.create(net, im, fm, processed_bpmn)
 
                 return response_json({
                     "msg":  messages["success"],

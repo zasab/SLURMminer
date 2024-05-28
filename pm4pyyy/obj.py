@@ -82,6 +82,7 @@ class Marking(Counter):
 
 
 class BPMN(object):
+    _instances = []
     class BPMNNode(object):
         def __init__(self, id="", name="", in_arcs=None, out_arcs=None, process=None):
             self.__id = ("id" + str(uuid.uuid4())) if id == "" else id
@@ -409,16 +410,36 @@ class BPMN(object):
             return self.__repr__()
 
     class DataObjectReference(object):
-        def __init__(self, id="", name="", command="", process=None):
+        def __init__(self, id="", name="", command="", process=None, targetRef="", sourceRef=""):
             self.__id = uuid.uuid4() if id == "" else id
             self.__name = name
             self.__process = DEFAULT_PROCESS if process == None else process
+            self.__targetRef = targetRef
+            self.__sourceRef = sourceRef
 
         def get_id(self):
             return self.__id
 
         def get_name(self):
             return self.__name
+        
+        def get_target(self):
+            return self.__targetRef
+        
+        def get_source(self):
+            return self.__sourceRef
+        
+        def set_id(self, id):
+            self.__id = id
+
+        def set_name(self, name):
+            self.__name = name
+        
+        def set_target(self, targetRef):
+            self.__targetRef = targetRef
+        
+        def set_source(self, sourceRef):
+            self.__sourceRef = sourceRef
 
         def __repr__(self):
             return str(self.__name)
@@ -426,11 +447,11 @@ class BPMN(object):
         def __str__(self):
             return self.__repr__()
     
-    def __init__(self, process_id=None, name="", nodes=None, flows=None, annotations=None, node_annotations=None, flows_details=None):
+    def __init__(self, process_id=None, name="", nodes=None, flows=None, annotations=None, 
+                 node_annotations=None, flows_details=None, data_objects=None):
         import networkx as nx
 
         self.__process_id = str(uuid.uuid4()) if process_id == None else process_id
-
         self.__name = name
         self.__graph = nx.MultiDiGraph()
         self.__nodes = set() if nodes is None else nodes
@@ -438,6 +459,9 @@ class BPMN(object):
         self.__annotations = dict() if annotations is None else annotations
         self.__node_annotations = dict() if node_annotations is None else node_annotations
         self.__flows_details = dict() if flows_details is None else flows_details
+        self.__data_objects = dict() if data_objects is None else data_objects
+
+        BPMN._instances.append(self)
 
         if nodes is not None:
             for node in nodes:
@@ -468,6 +492,10 @@ class BPMN(object):
         return self.__name
 
     def add_node(self, node):
+        print()
+        print("node-----------1: ", node.id)
+        print("node.name-----------1: ", node.name)
+        print()
         self.__nodes.add(node)
         self.__graph.add_node(node)
 
@@ -512,6 +540,27 @@ class BPMN(object):
             "source_ref": flow.get_source(),
             "target_ref": flow.get_target()
         }
+
+    def add_data_obj(self, data_obj_):
+        self.__data_objects[str(data_obj_.get_id())] = {
+            "name": data_obj_.get_name(),
+            "source_ref": data_obj_.get_source(),
+            "target_ref": data_obj_.get_target()
+        }
+
+
+    # def update_data_obj_by_id(cls, old_id, 
+    #                           new_id, new_name="",
+    #                           new_source="", new_target=""):
+        
+    #     for BPMNobj in cls._instances:
+    #         _BPMN__data_objects=BPMNobj.__dict__['_BPMN__data_objects']
+    #         for data_obj in _BPMN__data_objects:
+    #             if data_obj.get_id() == old_id:
+    #                 data_obj.set_id(new_id)
+    #                 data_obj.set_name(new_name)
+    #                 data_obj.set_source(new_source)
+    #                 data_obj.set_target(new_target)
 
     def find_annotation_association(self, node, associated_annote):
         corresponding_annotation = self.__annotations[str(associated_annote)]

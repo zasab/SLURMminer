@@ -7,12 +7,12 @@ def create(depend_script, sbatch_file):
     text2 = ""
     
     for job_id_script in depend_script:
-        print()
-        print()
-        print()
+        # print()
+        # print()
+        # print()
         output_file = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
-        print("output_file: ", output_file)
-        print("depend_script[job_id_script]: ", depend_script[job_id_script])
+        # print("output_file: ", output_file)
+        # print("depend_script[job_id_script]: ", depend_script[job_id_script])
         text2 += """{}=$(sbatch --parsable {})\n""".format(job_id_script, depend_script[job_id_script])
 
 
