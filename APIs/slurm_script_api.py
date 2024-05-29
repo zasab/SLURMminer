@@ -30,6 +30,7 @@ import re
 import hashlib
 
 
+
 slurm_script_manager = Blueprint('slurm_script_manager', __name__)
 
 def hash_to_4_digit_number(input_string):
@@ -299,38 +300,37 @@ def generate_slurm_script_from_files():
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
+                # pm4py.view_petri_net(net, im, fm)
+
+
+                # runs = find_runs(net, im, fm)
+                # all_inputs_dict = {}
+                # for index, run in runs.items():
+                #     edges = build_edges(net, run)
+                #     inputs_dict = inputs(net, run)
+                #     all_inputs_dict[index] = inputs_dict
+                #     # dag = storageprocessor.create_dag(edges)
+                #     # storageprocessor.save_dag(dag)
+
+                # depend_script, should_be_uploaded_list = generate_dependency_script(runs, all_inputs_dict)
+                # print(depend_script, should_be_uploaded_list )
 
                 
-                print()
-                print()
-                print()
-                print(processed_bpmn.__dict__)
-                print()
-                print()
-                print()
-
-                # pm4py.view_petri_net(net, im, fm)
-                runs = find_runs(net, im, fm)
-                all_inputs_dict = {}
-                for index, run in runs.items():
-                    edges = build_edges(net, run)
-                    inputs_dict = inputs(net, run)
-                    all_inputs_dict[index] = inputs_dict
-                    # dag = storageprocessor.create_dag(edges)
-                    # storageprocessor.save_dag(dag)
-
-                depend_script, should_be_uploaded_list = generate_dependency_script(runs, all_inputs_dict)
-                # sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
-                # sbatch_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, sbatch_file_name)
-                # should_be_uploaded_list.add(sbatch_file_path)
-                # sbatch_file = open(sbatch_file_path, 'w')
-                # SBatchFactory.create(depend_script, sbatch_file)
                 
                 # # print()
                 # # for file in should_be_uploaded_list:
                 # #     print(file + "\n")
 
-                graphObject.create(net, im, fm, processed_bpmn)
+                runs, all_inputs_dict, depend_script, should_be_uploaded_list = graphObject.create(net, im, fm, processed_bpmn)
+                SRunFactory_new.create(should_be_uploaded_list)
+                sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
+                sbatch_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, sbatch_file_name)
+                should_be_uploaded_list.add(sbatch_file_path)
+                sbatch_file = open(sbatch_file_path, 'w')
+                SBatchFactory.create(depend_script, sbatch_file)
+
+                # depend_script1, should_be_uploaded_list2 = generate_dependency_script(runs, all_inputs_dict)
+                # print(depend_script1, should_be_uploaded_list2)
 
                 return response_json({
                     "msg":  messages["success"],

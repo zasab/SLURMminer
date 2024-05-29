@@ -1,4 +1,4 @@
-from functions import BpmnUtils
+from functions.graphObject import JOB
 import config
 
 
@@ -31,8 +31,11 @@ fi
 
     srun_file.write(text1 + text2)
 
-def create(srun_file_name, command, should_be_uploaded_list):
-    srun_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, srun_file_name)
-    should_be_uploaded_list.add(srun_file_path)
-    srun_file = open(srun_file_path, 'w')
-    srun_file_content(srun_file, srun_file_name, command)
+def create(should_be_uploaded_list):
+    for job in JOB.get_all_jobs():
+        new_command = f"{job.get_application()}{' ' +' '.join(job.get_input_files()) if job.get_input_files() else ''} {len(job.get_input_files())}{' ' +job.get_output_file()[0] if job.get_output_file() else ''} {len(job.get_output_file())}"
+        srun_file_name = job.get_srun_file_name()
+        srun_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, srun_file_name)
+        should_be_uploaded_list.add(srun_file_path)
+        srun_file = open(srun_file_path, 'w')
+        srun_file_content(srun_file, srun_file_name, new_command)

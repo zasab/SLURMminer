@@ -1,2 +1,0 @@
-Copy-Item -Path "C:\Python310\Lib\site-packages\pm4py\objects\bpmn\importer\variants\lxml.py" -Destination "C:\Users\sadeghi\workspace\Phd\Papers\SLURMminer\implementation\tool\"
-Copy-Item -Path "C:\Python310\Lib\site-packages\pm4py\objects\bpmn\obj.py" -Destination "C:\Users\sadeghi\workspace\Phd\Papers\SLURMminer\implementation\tool\"

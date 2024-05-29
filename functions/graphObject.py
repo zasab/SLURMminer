@@ -6,13 +6,13 @@ class JOB:
     # Class variable to store all instances
     _instances = []
 
-    def __init__(self, task, job_id, application=None, dependency_script=None, input_files=None, output_file=None, srun_file_name=None):
+    def __init__(self, task, job_id, application=None, dependency_script=None, input_files=[], output_file=[], srun_file_name=None):
         self.task = task
         self.job_id = job_id
         self.application = application
         self.dependency_script = dependency_script
-        self.input_files = input_files
-        self.output_file = output_file
+        self.input_files = []
+        self.output_file = []
         self.srun_file_name = srun_file_name
 
         # Add the new instance to the class variable list
@@ -42,14 +42,14 @@ class JOB:
     def get_dependency_script(self):
         return self.dependency_script
     
-    def set_input_files(self, input_files):
-        self.input_files = input_files
+    def add_input_file(self, input_file):
+        self.input_files.append(input_file)
 
     def get_input_files(self):
         return self.input_files
     
-    def set_output_file(self, output_file):
-        self.output_file = output_file
+    def add_output_file(self, output_file):
+        self.output_file.append(output_file)
 
     def get_output_file(self):
         return self.output_file
@@ -92,20 +92,20 @@ class JOB:
         return False
 
     @classmethod
-    def set_input_files_by_job_id(cls, job_id, new_input_files):
+    def add_input_file_by_job_id(cls, job_id, new_input_file):
         """Set the input_files value for the job with the given job_id."""
         for job in cls._instances:
             if job.get_job_id() == job_id:
-                job.set_input_files(new_input_files)
+                job.add_input_file(new_input_file)
                 return True
         return False
 
     @classmethod
-    def set_output_file_by_job_id(cls, job_id, new_output_file):
+    def add_output_file_by_job_id(cls, job_id, new_output_file):
         """Set the output_file value for the job with the given job_id."""
         for job in cls._instances:
             if job.get_job_id() == job_id:
-                job.set_output_file(new_output_file)
+                job.add_output_file(new_output_file)
                 return True
         return False
     
@@ -291,7 +291,6 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
     JOB.set_srun_file_name_by_task(task, srun_file_name)
     command = get_command_from_label(task)
     JOB.set_application_by_task(task, command)
-    # SRunFactory_new.create(srun_file_name, application, should_be_uploaded_list)
     # we also need a job id that refers to srun file in our sbatch file
 
     job_id = 'job_id_' + str(get_unique_number_added_to_job_id(task))
@@ -356,38 +355,51 @@ def construct_dependencies_str(updated_job_ids):
     return ",".join(dependencies)
 
 def output_and_input_files_factory(bpmn):
-    
     _BPMN__data_objects = bpmn.__dict__['_BPMN__data_objects']
     _nodes = bpmn.__dict__['_BPMN__nodes']
+    node_ids = [node.id for node in _nodes]
 
     for data_object in _BPMN__data_objects:
         data_object_details = _BPMN__data_objects[data_object]
+        data_obj_name = data_object_details['name']
         source_ref_id = data_object_details['source_ref']
         target_ref_id = data_object_details['target_ref']
+        
+
+        for job in JOB.get_all_jobs():
+            job_task = job.get_task()
+            task_name =  job_task.name
+            job_id = job.get_job_id()
+
+            if source_ref_id in node_ids and target_ref_id in node_ids:
+                if task_name == source_ref_id:
+                    # here we find out that the data object(data_obj_name) in the output of job_id
+                    job.add_output_file_by_job_id(job_id, data_obj_name)
+                elif task_name == target_ref_id:
+                    # here we find out that the data object(data_obj_name) in the input of job_id
+                    job.add_input_file_by_job_id(job_id, data_obj_name)
+            elif source_ref_id in node_ids and len(target_ref_id)==0:
+                if task_name == source_ref_id:
+                    # here we find out that the data object(data_obj_name) in the output of job_id
+                    job.add_output_file_by_job_id(job_id, data_obj_name)
+            elif target_ref_id in node_ids and len(source_ref_id)==0:
+                if task_name == target_ref_id:
+                    # here we find out that the data object(data_obj_name) in the input of job_id
+                    job.add_input_file_by_job_id(job_id, data_obj_name)
         
 
 def create(petri_net, im, fm, bpmn):
     transitions = petri_net.transitions
     for transition in transitions:
-        job_id = 'job_id_' + str(get_unique_number_added_to_job_id(transition))
-        JOB(task=transition, job_id=job_id)
+        if transition.label is not None:
+            job_id = 'job_id_' + str(get_unique_number_added_to_job_id(transition))
+            JOB(task=transition, job_id=job_id)
 
     runs, all_inputs_dict = runs_and_inputs_factory(petri_net, im, fm)
     depend_script, should_be_uploaded_list = dependency_script_factory(runs, all_inputs_dict)
     for job_id_dep in depend_script:
         JOB.set_dependency_script_by_job_id(job_id_dep, depend_script[job_id_dep])
 
-    #TODO: STARTPOINT
     output_and_input_files_factory(bpmn)
-    
 
-    print()
-    print()
-    print()
-    for job in JOB.get_all_jobs():
-        print(f"Task: {job.get_task()},      Job ID: {job.get_job_id()},      Application: {job.get_application()}") 
-        print(f"Dependency Script: {job.get_dependency_script()},       Input Files: {job.get_input_files()}")
-        print(f"Output File: {job.get_output_file()},           SRun File Name: {job.get_srun_file_name()}")
-    print()
-    print()
-    print()
+    return runs, all_inputs_dict, depend_script, should_be_uploaded_list
