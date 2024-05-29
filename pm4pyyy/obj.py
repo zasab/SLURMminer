@@ -492,10 +492,6 @@ class BPMN(object):
         return self.__name
 
     def add_node(self, node):
-        print()
-        print("node-----------1: ", node.id)
-        print("node.name-----------1: ", node.name)
-        print()
         self.__nodes.add(node)
         self.__graph.add_node(node)
 

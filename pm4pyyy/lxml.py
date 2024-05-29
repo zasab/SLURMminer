@@ -65,10 +65,13 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
                         data_input_associations[node_str].append(sub_child.text)
                         if sub_child.text in data_object_ref_dict:
                             data_object_attr = data_object_ref_dict[sub_child.text]
-                            data_object_attr['targetRef'] = id
+                            if 'targetRef' in data_object_attr:
+                                data_object_attr['targetRef'].append(id)
+                            else:
+                                data_object_attr['targetRef'] = [id]
                         else:
-                            data_object_ref_dict[sub_child.text] = {'targetRef':id}
-                            
+                            data_object_ref_dict[sub_child.text] = {'targetRef':[id]}
+                
             elif child.tag.lower().endswith("dataoutputassociation"):
                 if node_str not in data_output_associations:
                     data_output_associations[node_str] = []
@@ -260,6 +263,7 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
         id = curr_el.get("id")
         name = curr_el.get("name").replace("\r", "").replace("\n", "") if "name" in curr_el.attrib else ""
         
+
         if id in data_object_ref_dict:
             data_object_attr = data_object_ref_dict[id]
             data_object_attr['name'] = name
@@ -310,7 +314,7 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
                 node.set_y(bounds["y"])
                 node.set_width(bounds["width"])
                 node.set_height(bounds["height"])
-
+                
         for data_obj in data_object_ref_dict:
             id = data_obj
             data_obj_details = data_object_ref_dict[id]
@@ -322,16 +326,16 @@ def parse_element(bpmn_graph, counts, curr_el, parents, incoming_dict, outgoing_
             if 'targetRef' in data_obj_details:
                 targetRef = data_obj_details['targetRef']
             else:
-                targetRef = ""
+                targetRef = []
 
             if 'sourceRef' in data_obj_details:
                 sourceRef = data_obj_details['sourceRef']
             else:
                 sourceRef = ""
-                
+
             bpmn_data_obj_ = BPMN.DataObjectReference(id=data_obj, name=name, 
-                                                      process=process, sourceRef=sourceRef,
-                                                      targetRef=targetRef)
+                                                        process=process, sourceRef=sourceRef,
+                                                        targetRef=targetRef)
             
             bpmn_graph.add_data_obj(bpmn_data_obj_)
     

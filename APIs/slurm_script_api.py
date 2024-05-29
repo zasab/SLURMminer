@@ -321,10 +321,12 @@ def generate_slurm_script_from_files():
                 # # for file in should_be_uploaded_list:
                 # #     print(file + "\n")
 
+                print("step 1")
                 runs, all_inputs_dict, depend_script, should_be_uploaded_list = graphObject.create(net, im, fm, processed_bpmn)
                 SRunFactory_new.create(should_be_uploaded_list)
                 sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
                 sbatch_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, sbatch_file_name)
+                print("step 2")
                 should_be_uploaded_list.add(sbatch_file_path)
                 sbatch_file = open(sbatch_file_path, 'w')
                 SBatchFactory.create(depend_script, sbatch_file)
