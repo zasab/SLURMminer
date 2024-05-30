@@ -9,34 +9,23 @@ from functions import graphObject
 def preprocessing_bpmn(bpmn_file_path):
     bpmn_graph = bpmn_parser.extract_bpmn_information(bpmn_file_path)
     print("extract_bpmn_information is finished....")
-
     pre_processed_bpmn = bpmn_parser.pre_processing(bpmn_graph)
     print("pre_processing is finished....")
-    print()
-    print("flows outside1: ", pre_processed_bpmn.__dict__['_BPMN__flows'])
-    bpmn_graph_processed_single_value_arguments, affected_nodes1 = bpmn_parser.process_single_value_arguments(pre_processed_bpmn)
-    print("flows outside2: ", bpmn_graph_processed_single_value_arguments.__dict__['_BPMN__flows'])
+    bpmn_graph_processed_conditions = bpmn_parser.process_conditions(pre_processed_bpmn)
+    print("process_conditions is finished....")
+    bpmn_graph_processed_single_value_arguments = bpmn_parser.process_single_value_arguments(bpmn_graph_processed_conditions)
     print("process_single_value_arguments is finished....")
-    print()
-    # bpmn_graph_processed_explicit_loops, affected_nodes2 = bpmn_parser.process_explicit_loops(bpmn_graph_processed_single_value_arguments)
-    # print("flows outside3: ", bpmn_graph_processed_explicit_loops.__dict__['_BPMN__flows'])
-    # print("process_explicit_loops is finished....")
-    # print()
-
-    # bpmn_graph_processed_conditions = bpmn_parser.process_conditions(bpmn_graph_processed_explicit_loops)
-    # print("process_conditions is finished....")
-    # print()
-
-    # bpmn_graph_processed_hidden_loops, affected_nodes3 = bpmn_parser.process_hidden_loops(bpmn_graph_processed_conditions)
-    # print("process_hidden_loops is finished....")
-    # print()
+    bpmn_graph_processed_explicit_loops = bpmn_parser.process_explicit_loops(bpmn_graph_processed_single_value_arguments)
+    print("process_explicit_loops is finished....")
+    bpmn_graph_processed_hidden_loops = bpmn_parser.process_hidden_loops(bpmn_graph_processed_explicit_loops)
+    print("process_hidden_loops is finished....")
 
     # combined_affected_nodes = affected_nodes1.union(affected_nodes2, affected_nodes3)
     # post_processed_nodes_bpmn_graph = bpmn_parser.remove_nodes_through(bpmn_graph_processed_hidden_loops, combined_affected_nodes)
     # print("affected nodes are removed....")
     # print()
 
-    return bpmn_graph
+    return bpmn_graph_processed_hidden_loops
 
 # def upload_and_run_exefile_on_SLURM(local_exe_filename, remoteserver_info, should_be_uploaded_list, script_folder_zip):
 #     try:

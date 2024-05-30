@@ -3,9 +3,7 @@ from pm4py.algo.simulation.playout.petri_net.variants import basic_playout
 from pm4py.objects.petri_net.obj import PetriNet
 
 class JOB:
-    # Class variable to store all instances
     _instances = []
-
     def __init__(self, task, job_id, application=None, dependency_script=None, input_files=[], output_file=[], srun_file_name=None):
         self.task = task
         self.job_id = job_id
@@ -132,6 +130,7 @@ def hash_to_4_digit_number(input_string):
     four_digit_number = decimal_number % 10000
     
     return four_digit_number
+
 def get_unique_number_added_to_job_id(task):
     task_name = task.name
     task_name1 = task_name.replace(" ", "_")
@@ -164,10 +163,17 @@ def get_job_application_from_label(task):
     command = task_label.split('.')[0] if '.' in task_label else task_label
     return command.strip()
 
+def get_transition(net, node):
+    for tran in net.transitions:
+        if tran.label == node:
+            return tran
+        else:
+            continue
+
 def find_runs(net, im, fm):
     sequences = basic_playout.apply(net, im, fm)
     runs = []
-    for trace in sequences: 
+    for trace in sequences:
         trace_set = {event['concept:name'] for event in trace}
         if trace_set not in runs:
             runs.append(trace_set)
@@ -179,23 +185,87 @@ def find_runs(net, im, fm):
             new_run.add(get_transition(net, node))
         
         new_runs[f"run_{idx}"] = new_run
+
     return new_runs
 
-def get_transition(net, node):
-    for tran in net.transitions:
-        if tran.label == node:
-            return tran
-        else:
-            continue
+def find_choice_part_in_petrinet(places, source_trans, first_source_trans, unique_trans):
+    for source_tran in list(source_trans):
+        for f_source_tran in first_source_trans:
+            if f_source_tran not in unique_trans:
+                unique_trans[f_source_tran] = set()
+
+        for place in places:
+            out_arcs = place.out_arcs
+            for arc in out_arcs:
+                if arc.target == source_tran:
+                    source_place = arc.source
+                    in_arcs = source_place.in_arcs
+                    if len(in_arcs) > 0:
+                        new_source_trans = set()
+                        for in_arc in in_arcs:
+                            new_source_tran = in_arc.source
+                            if new_source_tran.label:
+                                if source_tran in unique_trans:
+                                    unique_trans[source_tran].add(new_source_tran)
+                                else:
+                                    for unique_tran in unique_trans:
+                                        if source_tran in unique_trans[unique_tran]:
+                                            unique_trans[unique_tran].add(new_source_tran)
+                                    
+
+                                new_source_trans.add(new_source_tran)
+                                find_choice_part_in_petrinet(places, new_source_trans, first_source_trans,  unique_trans)
+
+
+
+def find_runs2(net, im, fm):
+    places = net.places
+    unique_trans = {}
+    for place in places:
+        in_arcs = place.in_arcs
+        if len(in_arcs) > 0:
+            if len(in_arcs) > 1:
+                source_trans = set()
+                for in_arc in in_arcs:
+                    source_tran = in_arc.source
+                    if source_tran.label:
+                        source_trans.add(source_tran)
+                if len(source_trans) > 1:
+                    find_choice_part_in_petrinet(places, source_trans, source_trans, unique_trans)
+                else:
+                    continue
+
+    transitions = net.transitions
+    visible_transitions = set()
+    for transition in transitions:
+        if transition.label:
+            visible_transitions.add(transition)
+
+    unique_trans_tuples = {tuple([key] + list(values)) for key, values in unique_trans.items()}
+    flat_set = {element for subset in unique_trans_tuples for element in subset}
+    difference_transitions_to_flat = visible_transitions - flat_set
+    updated_unique_trans_list = list()
+    for unique_trans_tupe in unique_trans_tuples:
+        unique_trans_set = set(unique_trans_tupe)
+        merged_set = unique_trans_set | difference_transitions_to_flat
+        updated_unique_trans_list.append(merged_set)
+
+    new_runs = {}
+    for idx, run in enumerate(updated_unique_trans_list):
+        new_run = set()
+        for node in run:
+            new_run.add(node)
+        
+        new_runs[f"run_{idx}"] = new_run
+
+    return new_runs
 
 def runs_and_inputs_factory(net, im, fm):
-    runs = find_runs(net, im, fm)
+    runs = find_runs2(net, im, fm)
     all_inputs_dict = {}
     for index, run in runs.items():
         inputs_dict = inputs(net, run)
         all_inputs_dict[index] = inputs_dict
-        # dag = storageprocessor.create_dag(edges)
-        # storageprocessor.save_dag(dag)
 
     return runs, all_inputs_dict
 
@@ -214,7 +284,6 @@ def inputs(net, run):
             inputs_dict[task] = []
 
     return inputs_dict
-
 
 def return_inputs(run, arc, in_arcs, inputs_dict ,net):
     for arc2 in in_arcs:
@@ -321,7 +390,6 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
 
         depend_script[job_id] = f"--dependency=afterok:{','.join(['$' + j_dep for j_dep in j_dep_list])} {srun_file_name}"
 
-
 def update_job_ids(old_job_ids, new_input_job_ids):
     for new_job_id in new_input_job_ids:
         found = False
@@ -387,7 +455,6 @@ def output_and_input_files_factory(bpmn):
                     # here we find out that the data object(data_obj_name) in the input of job_id
                     job.add_input_file_by_job_id(job_id, data_obj_name)
         
-
 def create(petri_net, im, fm, bpmn):
     transitions = petri_net.transitions
     for transition in transitions:
@@ -396,10 +463,10 @@ def create(petri_net, im, fm, bpmn):
             JOB(task=transition, job_id=job_id)
 
     runs, all_inputs_dict = runs_and_inputs_factory(petri_net, im, fm)
+
     depend_script, should_be_uploaded_list = dependency_script_factory(runs, all_inputs_dict)
     for job_id_dep in depend_script:
         JOB.set_dependency_script_by_job_id(job_id_dep, depend_script[job_id_dep])
 
-    output_and_input_files_factory(bpmn)
-
-    return runs, all_inputs_dict, depend_script, should_be_uploaded_list
+    # output_and_input_files_factory(bpmn)
+    return depend_script, should_be_uploaded_list
