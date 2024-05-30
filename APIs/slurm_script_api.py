@@ -300,7 +300,7 @@ def generate_slurm_script_from_files():
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
-                pm4py.view_petri_net(net, im, fm)
+                # pm4py.view_petri_net(net, im, fm)
 
 
                 # runs = find_runs(net, im, fm)
@@ -319,7 +319,6 @@ def generate_slurm_script_from_files():
                 # # for file in should_be_uploaded_list:
                 # #     print(file + "\n")
 
-                print("step 1")
                 depend_script, should_be_uploaded_list = graphObject.create(net, im, fm, processed_bpmn)
                 SRunFactory_new.create(should_be_uploaded_list)
                 sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"

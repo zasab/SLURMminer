@@ -4,13 +4,13 @@ from pm4py.objects.petri_net.obj import PetriNet
 
 class JOB:
     _instances = []
-    def __init__(self, task, job_id, application=None, dependency_script=None, input_files=[], output_file=[], srun_file_name=None):
+    def __init__(self, task, job_id, application=None, dependency_script=None, input_files=set(), output_file=set(), srun_file_name=None):
         self.task = task
         self.job_id = job_id
         self.application = application
         self.dependency_script = dependency_script
-        self.input_files = []
-        self.output_file = []
+        self.input_files = set()
+        self.output_file = set()
         self.srun_file_name = srun_file_name
 
         # Add the new instance to the class variable list
@@ -41,16 +41,16 @@ class JOB:
         return self.dependency_script
     
     def add_input_file(self, input_file):
-        self.input_files.append(input_file)
+        self.input_files.add(input_file)
 
     def get_input_files(self):
-        return self.input_files
+        return list(self.input_files)
     
     def add_output_file(self, output_file):
-        self.output_file.append(output_file)
+        self.output_file.add(output_file)
 
     def get_output_file(self):
-        return self.output_file
+        return list(self.output_file)
     
     def set_srun_file_name(self, srun_file_name):
         self.srun_file_name = srun_file_name
@@ -431,30 +431,34 @@ def output_and_input_files_factory(bpmn):
         data_object_details = _BPMN__data_objects[data_object]
         data_obj_name = data_object_details['name']
         source_ref_id = data_object_details['source_ref']
-        target_ref_id = data_object_details['target_ref']
-        
+        target_ref_ids = data_object_details['target_ref']
 
         for job in JOB.get_all_jobs():
             job_task = job.get_task()
             task_name =  job_task.name
             job_id = job.get_job_id()
+            # if source_ref_id in node_ids and target_ref_id in node_ids:
+            if source_ref_id in node_ids:
+                for target_ref_id in target_ref_ids:
+                    if target_ref_id in node_ids:
+                        if task_name == source_ref_id:
+                            # here we find out that the data object(data_obj_name) in the output of job_id
+                            job.add_output_file_by_job_id(job_id, data_obj_name)
+                        elif task_name == target_ref_id:
+                            # here we find out that the data object(data_obj_name) in the input of job_id
+                            job.add_input_file_by_job_id(job_id, data_obj_name)
 
-            if source_ref_id in node_ids and target_ref_id in node_ids:
-                if task_name == source_ref_id:
-                    # here we find out that the data object(data_obj_name) in the output of job_id
-                    job.add_output_file_by_job_id(job_id, data_obj_name)
-                elif task_name == target_ref_id:
-                    # here we find out that the data object(data_obj_name) in the input of job_id
-                    job.add_input_file_by_job_id(job_id, data_obj_name)
             elif source_ref_id in node_ids and len(target_ref_id)==0:
                 if task_name == source_ref_id:
                     # here we find out that the data object(data_obj_name) in the output of job_id
                     job.add_output_file_by_job_id(job_id, data_obj_name)
-            elif target_ref_id in node_ids and len(source_ref_id)==0:
-                if task_name == target_ref_id:
-                    # here we find out that the data object(data_obj_name) in the input of job_id
-                    job.add_input_file_by_job_id(job_id, data_obj_name)
-        
+            elif len(source_ref_id)==0:
+                for target_ref_id in target_ref_ids:
+                    if task_name == target_ref_id:
+                        # here we find out that the data object(data_obj_name) in the input of job_id
+                        job.add_input_file_by_job_id(job_id, data_obj_name)
+
+
 def create(petri_net, im, fm, bpmn):
     transitions = petri_net.transitions
     for transition in transitions:
@@ -468,5 +472,5 @@ def create(petri_net, im, fm, bpmn):
     for job_id_dep in depend_script:
         JOB.set_dependency_script_by_job_id(job_id_dep, depend_script[job_id_dep])
 
-    # output_and_input_files_factory(bpmn)
+    output_and_input_files_factory(bpmn)
     return depend_script, should_be_uploaded_list
