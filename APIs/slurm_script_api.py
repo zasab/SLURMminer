@@ -19,6 +19,7 @@ from functions import SLURMprocessor
 from functions import SRunFactory_new
 from functions import SBatchFactory
 from functions import graphObject
+from functions import CommandsFactory
 import warnings
 warnings.filterwarnings("ignore")
 import networkx as nx
@@ -28,6 +29,8 @@ import networkx as nx
 from pm4py.objects.petri_net.obj import PetriNet, Marking
 import re
 import hashlib
+import random
+import string
 
 
 
@@ -299,6 +302,7 @@ def generate_slurm_script_from_files():
                 script_folder_zip_path = storageprocessor.save_file(script_folder_zip, config.bpmn.uploaded_files_directory)
 
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
+
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
                 # pm4py.view_petri_net(net, im, fm)
 
@@ -325,7 +329,10 @@ def generate_slurm_script_from_files():
                 sbatch_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, sbatch_file_name)
                 should_be_uploaded_list.add(sbatch_file_path)
                 sbatch_file = open(sbatch_file_path, 'w')
-                SBatchFactory.create(depend_script, sbatch_file)
+                CI = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                SBatchFactory.create(depend_script, sbatch_file, CI)
+
+                CommandsFactory.create('run_commands.sh', sbatch_file_name, script_folder_zip.filename, should_be_uploaded_list)
 
                 # depend_script1, should_be_uploaded_list2 = generate_dependency_script(runs, all_inputs_dict)
                 # print(depend_script1, should_be_uploaded_list2)

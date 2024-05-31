@@ -1,0 +1,26 @@
+import os
+import warnings
+warnings.filterwarnings("ignore")
+
+#-------------------------------------------------
+import os, sys
+from os.path import dirname, abspath
+filedir = dirname(abspath(__file__))
+basedir = dirname(dirname(abspath(__file__)))
+sys.path.insert(1, basedir)
+import command_parser
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+inputs_dict, output_file, script_arguments = command_parser.parse(script_dir)
+print("inputs_dict: ", inputs_dict)
+print("output_file: ", output_file)
+print("script_arguments: ", script_arguments)
+print()
+# #-------------------------------------------------
+
+log_name = script_arguments[0]
+log_path = os.path.join(script_dir, 'logs', log_name)
+
+#------------------------------------------------- outputs
+if output_file:
+    command_parser.output_generator(os.path.join(script_dir, output_file), log_path)

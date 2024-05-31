@@ -245,10 +245,13 @@ def find_runs2(net, im, fm):
     flat_set = {element for subset in unique_trans_tuples for element in subset}
     difference_transitions_to_flat = visible_transitions - flat_set
     updated_unique_trans_list = list()
-    for unique_trans_tupe in unique_trans_tuples:
-        unique_trans_set = set(unique_trans_tupe)
-        merged_set = unique_trans_set | difference_transitions_to_flat
-        updated_unique_trans_list.append(merged_set)
+    if len(unique_trans_tuples) > 0:
+        for unique_trans_tupe in unique_trans_tuples:
+            unique_trans_set = set(unique_trans_tupe)
+            merged_set = unique_trans_set | difference_transitions_to_flat
+            updated_unique_trans_list.append(merged_set)
+    else:
+        updated_unique_trans_list.append(difference_transitions_to_flat)
 
     new_runs = {}
     for idx, run in enumerate(updated_unique_trans_list):
@@ -469,6 +472,7 @@ def create(petri_net, im, fm, bpmn):
     runs, all_inputs_dict = runs_and_inputs_factory(petri_net, im, fm)
 
     depend_script, should_be_uploaded_list = dependency_script_factory(runs, all_inputs_dict)
+    
     for job_id_dep in depend_script:
         JOB.set_dependency_script_by_job_id(job_id_dep, depend_script[job_id_dep])
 
