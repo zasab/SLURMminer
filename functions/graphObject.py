@@ -458,84 +458,49 @@ def create(petri_net, im, fm, bpmn):
     for job_id_dep in depend_script:
         JOB.set_dependency_script_by_job_id(job_id_dep, depend_script[job_id_dep])
 
-    new_data_objects = []
-    pre_process_data_objects(bpmn, new_data_objects)
-
-    # output_and_input_files_factory(bpmn)
+    output_and_input_files_factory(bpmn)
     return depend_script, should_be_uploaded_list
-
-def pre_process_data_objects(bpmn, new_data_objects):
-    _BPMN__data_objects = bpmn.__dict__['_BPMN__data_objects']
-    _nodes = bpmn.__dict__['_BPMN__nodes']
-    node_ids = [node.id for node in _nodes]
-
-    # for data_object in _BPMN__data_objects:
-    #     data_object_details = _BPMN__data_objects[data_object]
-    #     print("data_object_details: ", data_object_details)
-    #     data_obj_name = data_object_details['name']
-    #     source_ref_id = data_object_details['source_ref']
-    #     target_ref_ids = data_object_details['target_ref']
-    #     if source_ref_id in node_ids:
-    #         target_refs = []
-    #         for target_ref_id in target_ref_ids:
-    #             for job in JOB.get_all_jobs():
-    #                 old_corresponding = job.get_corresponding_task_from_initial_bpmn()
-    #                 if target_ref_id == old_corresponding.id:
-    #                     main_task = job.get_task()
-    #                     target_refs.append(main_task.id)
-
-    #         new_data_object = {
-    #             'name': data_obj_name, 
-    #             'source_ref': source_ref_id, 
-    #             'target_ref': target_refs
-    #         }
-
-    #         new_data_objects.append(new_data_object)
-
-    # print()
-    # for ccc in new_data_objects:
-    #     print(ccc)
-    # print("++++++"*20)
-    # for job in JOB.get_all_jobs():
-    #     main_task = job.get_task()
-    #     old_corresponding = job.get_corresponding_task_from_initial_bpmn()
-    #     for flow in bpmn.__dict__['_BPMN__flows']:
-    #         print(flow)
 
 def output_and_input_files_factory(bpmn):
     _BPMN__data_objects = bpmn.__dict__['_BPMN__data_objects']
     _nodes = bpmn.__dict__['_BPMN__nodes']
     node_ids = [node.id for node in _nodes]
 
-    # for data_object in _BPMN__data_objects:
-    #     data_object_details = _BPMN__data_objects[data_object]
-    #     print("data_object_details: ", data_object_details)
-    #     data_obj_name = data_object_details['name']
-    #     source_ref_id = data_object_details['source_ref']
-    #     target_ref_ids = data_object_details['target_ref']
+    for data_object in _BPMN__data_objects:
+        print()
+        print()
+        data_object_details = _BPMN__data_objects[data_object]
+        data_obj_name = data_object_details['name']
+        source_ref_id = data_object_details['source_ref']
+        target_ref_ids = data_object_details['target_ref']
+        if source_ref_id in node_ids:
+            for target_ref_id in target_ref_ids:
+                if target_ref_id in node_ids:
+                    print("data_object_details: ", data_object_details)
+                    for job in JOB.get_all_jobs():
+                        job_task = job.get_task()
+                        job_task_id = job_task.id
+                        job_id = job.get_job_id()
+                        if job_task_id == source_ref_id:
+                            print(job_task)
+                            job.add_output_file_by_job_id(job_id, data_obj_name)
 
-        # for job in JOB.get_all_jobs():
-        #     job_task = job.get_task()
-        #     task_name =  job_task.name
-        #     job_id = job.get_job_id()
-        #     corresponding_task = job.get_corresponding_task_from_initial_bpmn()
-        #     # if source_ref_id in node_ids and target_ref_id in node_ids:
-        #     if source_ref_id in node_ids:
-        #         for target_ref_id in target_ref_ids:
-        #             if target_ref_id in node_ids:
-        #                 if task_name == source_ref_id:
-        #                     # here we find out that the data object(data_obj_name) in the output of job_id
-        #                     job.add_output_file_by_job_id(job_id, data_obj_name)
-        #                 elif task_name == target_ref_id:
-        #                     # here we find out that the data object(data_obj_name) in the input of job_id
-        #                     job.add_input_file_by_job_id(job_id, data_obj_name)
-
-        #     elif source_ref_id in node_ids and len(target_ref_id)==0:
-        #         if task_name == source_ref_id:
-        #             # here we find out that the data object(data_obj_name) in the output of job_id
-        #             job.add_output_file_by_job_id(job_id, data_obj_name)
-        #     elif len(source_ref_id)==0:
-        #         for target_ref_id in target_ref_ids:
-        #             if task_name == target_ref_id:
-        #                 # here we find out that the data object(data_obj_name) in the input of job_id
-        #                 job.add_input_file_by_job_id(job_id, data_obj_name)
+                        if job_task_id == target_ref_id:
+                            job.add_input_file_by_job_id(job_id, data_obj_name)
+        elif source_ref_id in node_ids and len(target_ref_id)==0:
+            for job in JOB.get_all_jobs():
+                job_task = job.get_task()
+                job_task_id = job_task.id
+                job_id = job.get_job_id()
+                if job_task_id == source_ref_id:
+                    job.add_output_file_by_job_id(job_id, data_obj_name)
+        elif len(source_ref_id)==0:
+            for target_ref_id in target_ref_ids:
+                if target_ref_id in node_ids:
+                    print("data_object_details: ", data_object_details)
+                    for job in JOB.get_all_jobs():
+                        job_task = job.get_task()
+                        job_task_id = job_task.id
+                        job_id = job.get_job_id()
+                        if job_task_id == target_ref_id:
+                            job.add_input_file_by_job_id(job_id, data_obj_name)
