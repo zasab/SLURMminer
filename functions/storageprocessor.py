@@ -12,11 +12,13 @@ from werkzeug.utils import secure_filename
 import statistics
 import random
 from matplotlib.lines import Line2D
+import time
 
 def remove_dir(directory):
     try:
         if os.path.exists(directory):
             shutil.rmtree(directory)
+            time.sleep(2)
             # print(f"Directory '{directory}' removed successfully.")
     except OSError as e:
         print(f"Error removing directory '{directory}': {e}")

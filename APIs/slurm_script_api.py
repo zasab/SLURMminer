@@ -19,6 +19,7 @@ from functions import SLURMprocessor
 from functions import SRunFactory_new
 from functions import SBatchFactory
 from functions import graphObject
+from functions.graphObject import JOB
 from functions import CommandsFactory
 import warnings
 warnings.filterwarnings("ignore")
@@ -293,16 +294,19 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
 def generate_slurm_script_from_files():
     try:
         if request.files:
+            print()
+            print()
+            print("-----"*20)
+            storageprocessor.remove_dir(config.bpmn.uploaded_files_directory)
+            JOB.remove_all_jobs()
+            should_be_uploaded_list = {}
             files = request.files
             if 'bpmn_file' in files and 'script_folder_zip' in files:
                 bpmn_file = files["bpmn_file"]
                 script_folder_zip = files["script_folder_zip"]
-                storageprocessor.remove_dir(config.bpmn.uploaded_files_directory)
                 bpmn_file_path = storageprocessor.save_file(bpmn_file, config.bpmn.uploaded_files_directory)
                 script_folder_zip_path = storageprocessor.save_file(script_folder_zip, config.bpmn.uploaded_files_directory)
-
                 processed_bpmn = SLURMprocessor.preprocessing_bpmn(bpmn_file_path)
-
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
                 # pm4py.view_petri_net(net, im, fm)
 
@@ -324,6 +328,7 @@ def generate_slurm_script_from_files():
                 # #     print(file + "\n")
 
                 depend_script, should_be_uploaded_list = graphObject.create(net, im, fm, processed_bpmn)
+
                 SRunFactory_new.create(should_be_uploaded_list)
                 sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
                 sbatch_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, sbatch_file_name)
@@ -333,9 +338,6 @@ def generate_slurm_script_from_files():
                 SBatchFactory.create(depend_script, sbatch_file, CI)
 
                 CommandsFactory.create('run_commands.sh', sbatch_file_name, script_folder_zip.filename, should_be_uploaded_list)
-
-                # depend_script1, should_be_uploaded_list2 = generate_dependency_script(runs, all_inputs_dict)
-                # print(depend_script1, should_be_uploaded_list2)
 
                 return response_json({
                     "msg":  messages["success"],

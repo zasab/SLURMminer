@@ -4,7 +4,7 @@ from pm4py.objects.petri_net.obj import PetriNet
 
 class JOB:
     _instances = []
-    def __init__(self, task, job_id, application=None, dependency_script=None, input_files=set(), output_file=set(), srun_file_name=None):
+    def __init__(self, task, job_id, application=None, dependency_script=None, input_files=set(), output_file=set(), srun_file_name=None, corresponding_task_from_initial_bpmn=""):
         self.task = task
         self.job_id = job_id
         self.application = application
@@ -12,6 +12,7 @@ class JOB:
         self.input_files = set()
         self.output_file = set()
         self.srun_file_name = srun_file_name
+        self.corresponding_task_from_initial_bpmn = ""
 
         # Add the new instance to the class variable list
         JOB._instances.append(self)
@@ -21,9 +22,6 @@ class JOB:
 
     def get_task(self):
         return self.task
-    
-    def set_job_id(self, job_id):
-        self.job_id = job_id
 
     def get_job_id(self):
         return self.job_id
@@ -57,26 +55,32 @@ class JOB:
 
     def get_srun_file_name(self):
         return self.srun_file_name
+    
+    def get_corresponding_task_from_initial_bpmn(self):
+        return self.corresponding_task_from_initial_bpmn
+    
+    def set_corresponding_task_from_initial_bpmn(self, old_task):
+        self.corresponding_task_from_initial_bpmn = old_task
+
+    @classmethod
+    def set_corresponding_task_form_initial_bpmn_by_job_id(cls, job_id, old_task):
+        """Set the dependency_script value for the job with the given job_id."""
+        for job in cls._instances:
+            if job.get_job_id() == job_id:
+                job.set_corresponding_task_from_initial_bpmn(old_task)
+                return True
+        return False
 
     @classmethod
     def get_all_jobs(cls):
         return cls._instances
     
     @classmethod
-    def set_srun_file_name_by_task(cls, task, new_srun_file_name):
-        """Set the srun_file_name value for the job with the given task."""
+    def set_srun_file_name_by_job_id(cls, job_id, new_srun_file_name):
+        """Set the dependency_script value for the job with the given job_id."""
         for job in cls._instances:
-            if job.get_task() == task:
+            if job.get_job_id() == job_id:
                 job.set_srun_file_name(new_srun_file_name)
-                return True
-        return False
-    
-    @classmethod
-    def set_application_by_task(cls, task, new_application):
-        """Set the application value for the job with the given job_id."""
-        for job in cls._instances:
-            if job.get_task() == task:
-                job.set_application(new_application)
                 return True
         return False
     
@@ -86,6 +90,16 @@ class JOB:
         for job in cls._instances:
             if job.get_job_id() == job_id:
                 job.set_dependency_script(new_dependency_script)
+                return True
+        return False
+    
+    @classmethod
+    def set_application_by_job_id(cls, job_id, new_application):
+        """Set the dependency_script value for the job with the given job_id."""
+        for job in cls._instances:
+            if job.get_job_id() == job_id:
+                print(f"{new_application} is set .......")
+                job.set_application(new_application)
                 return True
         return False
 
@@ -122,6 +136,11 @@ class JOB:
             if job.task == task:
                 return job.get_job_id()
         return None
+    
+    @classmethod
+    def remove_all_jobs(cls):
+        """Remove all job instances."""
+        cls._instances.clear()
 
 def hash_to_4_digit_number(input_string):
     hashed = hashlib.sha256(input_string.encode()).hexdigest()
@@ -359,14 +378,21 @@ def extract_dependencies(input_str):
 def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list):
     # based on the name of the application needs to be run on SLURM and the task id we generate a unique a name for our bash file
     # that contains srun and parameter settings
-    srun_file_name = get_unique_number_added_to_job_id(task) + "_" + get_job_application_from_label(task) + '.sh'
-    JOB.set_srun_file_name_by_task(task, srun_file_name)
+
+    task_name = task.name
+    for job in JOB.get_all_jobs():
+        job_task = job.get_task()
+        if job_task.id == task_name:
+            job_id = job.get_job_id_by_task(job_task)
+
+    unique_number_added_to_job_id = job_id.split('job_id_')[1]
+    srun_file_name = unique_number_added_to_job_id + "_" + get_job_application_from_label(task) + '.sh'
+        
+    JOB.set_srun_file_name_by_job_id(job_id, srun_file_name)
     command = get_command_from_label(task)
-    JOB.set_application_by_task(task, command)
+    JOB.set_application_by_job_id(job_id, command)
     # we also need a job id that refers to srun file in our sbatch file
-
-    job_id = 'job_id_' + str(get_unique_number_added_to_job_id(task))
-
+    
     if job_id not in job_ids:
         job_ids[task] = job_id
 
@@ -425,56 +451,91 @@ def construct_dependencies_str(updated_job_ids):
     
     return ",".join(dependencies)
 
-def output_and_input_files_factory(bpmn):
-    _BPMN__data_objects = bpmn.__dict__['_BPMN__data_objects']
-    _nodes = bpmn.__dict__['_BPMN__nodes']
-    node_ids = [node.id for node in _nodes]
-
-    for data_object in _BPMN__data_objects:
-        data_object_details = _BPMN__data_objects[data_object]
-        data_obj_name = data_object_details['name']
-        source_ref_id = data_object_details['source_ref']
-        target_ref_ids = data_object_details['target_ref']
-
-        for job in JOB.get_all_jobs():
-            job_task = job.get_task()
-            task_name =  job_task.name
-            job_id = job.get_job_id()
-            # if source_ref_id in node_ids and target_ref_id in node_ids:
-            if source_ref_id in node_ids:
-                for target_ref_id in target_ref_ids:
-                    if target_ref_id in node_ids:
-                        if task_name == source_ref_id:
-                            # here we find out that the data object(data_obj_name) in the output of job_id
-                            job.add_output_file_by_job_id(job_id, data_obj_name)
-                        elif task_name == target_ref_id:
-                            # here we find out that the data object(data_obj_name) in the input of job_id
-                            job.add_input_file_by_job_id(job_id, data_obj_name)
-
-            elif source_ref_id in node_ids and len(target_ref_id)==0:
-                if task_name == source_ref_id:
-                    # here we find out that the data object(data_obj_name) in the output of job_id
-                    job.add_output_file_by_job_id(job_id, data_obj_name)
-            elif len(source_ref_id)==0:
-                for target_ref_id in target_ref_ids:
-                    if task_name == target_ref_id:
-                        # here we find out that the data object(data_obj_name) in the input of job_id
-                        job.add_input_file_by_job_id(job_id, data_obj_name)
-
-
 def create(petri_net, im, fm, bpmn):
-    transitions = petri_net.transitions
-    for transition in transitions:
-        if transition.label is not None:
-            job_id = 'job_id_' + str(get_unique_number_added_to_job_id(transition))
-            JOB(task=transition, job_id=job_id)
-
     runs, all_inputs_dict = runs_and_inputs_factory(petri_net, im, fm)
-
     depend_script, should_be_uploaded_list = dependency_script_factory(runs, all_inputs_dict)
     
     for job_id_dep in depend_script:
         JOB.set_dependency_script_by_job_id(job_id_dep, depend_script[job_id_dep])
 
-    output_and_input_files_factory(bpmn)
+    new_data_objects = []
+    pre_process_data_objects(bpmn, new_data_objects)
+
+    # output_and_input_files_factory(bpmn)
     return depend_script, should_be_uploaded_list
+
+def pre_process_data_objects(bpmn, new_data_objects):
+    _BPMN__data_objects = bpmn.__dict__['_BPMN__data_objects']
+    _nodes = bpmn.__dict__['_BPMN__nodes']
+    node_ids = [node.id for node in _nodes]
+
+    # for data_object in _BPMN__data_objects:
+    #     data_object_details = _BPMN__data_objects[data_object]
+    #     print("data_object_details: ", data_object_details)
+    #     data_obj_name = data_object_details['name']
+    #     source_ref_id = data_object_details['source_ref']
+    #     target_ref_ids = data_object_details['target_ref']
+    #     if source_ref_id in node_ids:
+    #         target_refs = []
+    #         for target_ref_id in target_ref_ids:
+    #             for job in JOB.get_all_jobs():
+    #                 old_corresponding = job.get_corresponding_task_from_initial_bpmn()
+    #                 if target_ref_id == old_corresponding.id:
+    #                     main_task = job.get_task()
+    #                     target_refs.append(main_task.id)
+
+    #         new_data_object = {
+    #             'name': data_obj_name, 
+    #             'source_ref': source_ref_id, 
+    #             'target_ref': target_refs
+    #         }
+
+    #         new_data_objects.append(new_data_object)
+
+    # print()
+    # for ccc in new_data_objects:
+    #     print(ccc)
+    # print("++++++"*20)
+    # for job in JOB.get_all_jobs():
+    #     main_task = job.get_task()
+    #     old_corresponding = job.get_corresponding_task_from_initial_bpmn()
+    #     for flow in bpmn.__dict__['_BPMN__flows']:
+    #         print(flow)
+
+def output_and_input_files_factory(bpmn):
+    _BPMN__data_objects = bpmn.__dict__['_BPMN__data_objects']
+    _nodes = bpmn.__dict__['_BPMN__nodes']
+    node_ids = [node.id for node in _nodes]
+
+    # for data_object in _BPMN__data_objects:
+    #     data_object_details = _BPMN__data_objects[data_object]
+    #     print("data_object_details: ", data_object_details)
+    #     data_obj_name = data_object_details['name']
+    #     source_ref_id = data_object_details['source_ref']
+    #     target_ref_ids = data_object_details['target_ref']
+
+        # for job in JOB.get_all_jobs():
+        #     job_task = job.get_task()
+        #     task_name =  job_task.name
+        #     job_id = job.get_job_id()
+        #     corresponding_task = job.get_corresponding_task_from_initial_bpmn()
+        #     # if source_ref_id in node_ids and target_ref_id in node_ids:
+        #     if source_ref_id in node_ids:
+        #         for target_ref_id in target_ref_ids:
+        #             if target_ref_id in node_ids:
+        #                 if task_name == source_ref_id:
+        #                     # here we find out that the data object(data_obj_name) in the output of job_id
+        #                     job.add_output_file_by_job_id(job_id, data_obj_name)
+        #                 elif task_name == target_ref_id:
+        #                     # here we find out that the data object(data_obj_name) in the input of job_id
+        #                     job.add_input_file_by_job_id(job_id, data_obj_name)
+
+        #     elif source_ref_id in node_ids and len(target_ref_id)==0:
+        #         if task_name == source_ref_id:
+        #             # here we find out that the data object(data_obj_name) in the output of job_id
+        #             job.add_output_file_by_job_id(job_id, data_obj_name)
+        #     elif len(source_ref_id)==0:
+        #         for target_ref_id in target_ref_ids:
+        #             if task_name == target_ref_id:
+        #                 # here we find out that the data object(data_obj_name) in the input of job_id
+        #                 job.add_input_file_by_job_id(job_id, data_obj_name)

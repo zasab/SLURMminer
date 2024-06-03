@@ -8,6 +8,20 @@ from functions import storageprocessor
 import string
 import ast
 from functions.graphObject import JOB
+import hashlib
+
+def hash_to_4_digit_number(input_string):
+    hashed = hashlib.sha256(input_string.encode()).hexdigest()
+    first_4_chars = hashed[:4]
+    decimal_number = int(first_4_chars, 16)
+    four_digit_number = decimal_number % 10000
+    
+    return four_digit_number
+
+def get_unique_number_added_to_job_id(task):
+    task_name = task.name
+    task_name1 = task_name.replace(" ", "_")
+    return str(hash_to_4_digit_number(task_name1)) 
 
 random_strings = set()
 def generate_random_string(length):
@@ -75,7 +89,7 @@ def find_rep_flows(bpmn_info):
                 "target_node": target_node
             }
 
-    return rep_flows 
+    return rep_flows
 
 def process_single_value_arguments(bpmn_graph):
     bpmn_info = bpmn_graph.__dict__
@@ -115,6 +129,9 @@ def process_single_value_arguments(bpmn_graph):
             new_node = BPMN.Task(name=new_node_command)
             new_nodes.add(new_node)
             data_object_factory(bpmn_graph, new_node, node)
+            job_id = 'job_id_' + str(get_unique_number_added_to_job_id(new_node))
+            JOB(task=new_node, job_id=job_id)
+            JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, node)
             new_annotation_lists[new_node] = new_arguments_list                
             corresponding_nodes[node] = new_node
             corresponding1[node]={new_node}
@@ -160,18 +177,11 @@ def get_key_from_value(d, i_key):
 
 
 def data_object_factory(bpmn_graph, new_node, old_node):
-    # print()
-    # print("----"*20)
     _BPMN__data_objects= bpmn_graph.__dict__['_BPMN__data_objects']
 
     for key1, __data_object in list(_BPMN__data_objects.items()):
         source_ref = __data_object['source_ref']
         target_refs = __data_object['target_ref']
-
-        # print("old_node: ", old_node)
-        # print("old_node id: ", old_node.id)
-        # print("new_node: ", new_node)
-        # print("new_node id: ", new_node.id)
         
 
         if old_node == source_ref:
@@ -185,15 +195,6 @@ def data_object_factory(bpmn_graph, new_node, old_node):
                                                     process=None, sourceRef=source_ref,
                                                     targetRef=[new_node.id])
             bpmn_graph.add_data_obj(bpmn_data_obj_2)
-
-    
-    # print()
-    # print()
-    # print("final ..... ", bpmn_graph.__dict__['_BPMN__data_objects'])
-    # print()
-    # print()
-    # print("----"*20)
-    # print()
 
 def remove_nodes_through(bpmn_graph, affected_nodes):
     for old_node1 in affected_nodes:
@@ -270,6 +271,9 @@ def process_explicit_loops(bpmn_graph):
 
                 new_activity = BPMN.Task(name=new_activity_name)
                 data_object_factory(bpmn_graph, new_activity, activity_with_loop)
+                job_id = 'job_id_' + str(get_unique_number_added_to_job_id(new_activity))
+                JOB(task= new_activity, job_id=job_id)
+                JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, activity_with_loop)
 
                 if activity_with_loop_annot:
                     bpmn_graph.add_node_annotation(new_activity, activity_with_loop_annot)
@@ -388,18 +392,6 @@ def process_hidden_loops(bpmn_graph):
     affected_nodes_to_remove = set()
     affected_flows_to_remove = set()
     correspondings3={}
-
-    # print()
-    # print()
-    # print()
-    # nodes1 = bpmn_graph.__dict__['_BPMN__nodes']
-    # print("nodes1: ", nodes1, len(nodes1))
-    # print()
-    # flows1 = bpmn_graph.__dict__['_BPMN__flows']
-    # print("flows1: ", flows1, len(flows1))
-    # print()
-    # print()
-    # print()
     
     for hidden_flow_id, hidden_flow_details in hidden_flows.items():
         start_of_loop, activity_with_iteration, combinations, end_of_loop, incomings, outgoings = process_iterative_flow_details(flows, hidden_flow_details, _BPMN__node_annotations)
@@ -436,13 +428,17 @@ def process_hidden_loops(bpmn_graph):
             new_activity_name = BpmnUtils.replace_placeholders(activity_with_iteration.name, com)
             new_activity = BPMN.Task(name=new_activity_name)
 
+            data_object_factory(bpmn_graph, new_activity, activity_with_iteration)
+            job_id = 'job_id_' + str(get_unique_number_added_to_job_id(new_activity))
+            JOB(task=new_activity, job_id=job_id)
+            JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, activity_with_iteration)
+
             if activity_with_iteration not in correspondings3:
                 correspondings3[activity_with_iteration] = {new_activity}
             else:
                 correspondings3[activity_with_iteration].add(new_activity)
 
             all_new_activities[new_activity]=con_str
-            data_object_factory(bpmn_graph, new_activity, activity_with_iteration)
             new_tupplee3 = (new_start, new_activity)
             # new_start_flow = BPMN.SequenceFlow(new_start, new_activity)
             all_new_flows.add(new_tupplee3)
@@ -510,6 +506,10 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
                     target_new_node = BPMN.ExclusiveGateway(name=target_new_node_name)
                 else:
                     target_new_node = BPMN.Task(name=target_new_node_name)
+                    data_object_factory(bpmn_graph, target_new_node, target_node)
+                    job_id = 'job_id_' + str(get_unique_number_added_to_job_id(target_new_node))
+                    JOB(task=target_new_node, job_id=job_id)
+                    JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, target_node)
 
                 if target_node not in correspondings3:
                     correspondings3[target_node] = {target_new_node}
@@ -577,6 +577,9 @@ def process_conditions(bpmn_graph):
         SLURM_app = hidden_flow_details['SLURM_app']
         SLURM_pure_app = SLURM_app.replace("SLURM:", "").strip()
         new_node = BPMN.Task(name=SLURM_pure_app)
+        job_id = 'job_id_' + str(get_unique_number_added_to_job_id(new_node))
+        JOB(task=new_node, job_id=job_id)
+        JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, new_node)
         new_nodes.add(new_node)
 
         source_node = hidden_flow_details['source_node']

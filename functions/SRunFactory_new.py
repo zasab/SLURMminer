@@ -38,6 +38,7 @@ def create(should_be_uploaded_list):
     for job in JOB.get_all_jobs():
         print("job.get_input_files(): ", job.get_input_files())
         print("job.get_output_file(): ", job.get_output_file())
+        print("job.get_application(): ", job.get_application())
         new_command = f"{job.get_application()}{' ' +' '.join(job.get_input_files()) if job.get_input_files() else ''} {len(job.get_input_files())}{' ' +job.get_output_file()[0] if job.get_output_file() else ''} {len(job.get_output_file())}"
         print("new_command: ", new_command)
         # new_command = f"{job.get_application()}{' ' +' '.join(['$FILES_DIR/'+file for file in job.get_input_files()]) if job.get_input_files() else ''} {len(job.get_input_files())}{' ' +' '.join(['$FILES_DIR/'+file for file in job.get_output_file()]) if job.get_output_file() else ''} {len(job.get_output_file())}"
