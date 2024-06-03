@@ -22,3 +22,7 @@ fitness_alignments = pm4py.fitness_alignments(log, net, im, fm)
 
 print("fitness_token_based_replay: ", fitness_token_based_replay)
 print("fitness_alignments: ", fitness_alignments)
+#------------------------------------------------- outputs
+if output_file:
+    command_parser.output_generator(os.path.join(script_dir, output_file), f"fitness_token_based_replay: {fitness_token_based_replay}")
+    command_parser.output_generator(os.path.join(script_dir, output_file), f"fitness_alignments: {fitness_alignments}")

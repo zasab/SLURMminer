@@ -37,5 +37,9 @@ def parse(script_dir):
     return inputs_dict, output_file, script_arguments
 
 def output_generator(output_file_path, new_output):
-    with open(output_file_path, 'w') as file:
-        file.write(f"{new_output}\n")
+    if os.path.exists(output_file_path):
+        with open(output_file_path, 'a') as file:
+            file.write(f"{new_output}\n")
+    else:
+        with open(output_file_path, 'w') as file:
+            file.write(f"{new_output}\n")
