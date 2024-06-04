@@ -39,16 +39,12 @@ def postprocessing_bpmn(processed_bpmn):
 def find_connected_jobs():
     connected_jobs = {}
 
-    print("step 1")
     for job in JOB.get_all_jobs():
         job_id = job.get_job_id()
-        print("job_id: ", job_id)
         dependecy_script = job.get_dependency_script()
-        print("dependecy_script: ", dependecy_script)
         if '--dependency=' not in dependecy_script:
             connected_jobs[job_id] = set()
 
-    print("step 2", connected_jobs)
     for job in JOB.get_all_jobs():
         job_id = job.get_job_id()
         dependecy_script = job.get_dependency_script()
@@ -69,7 +65,6 @@ def find_connected_jobs():
                                     if stripped_job_id in connected_jobs[conn_j]:
                                         connected_jobs[conn_j].add(job_id)
     
-    print("step 3", connected_jobs)
     connected_jobs_list = list()        
     for key, values in connected_jobs.items():
         temp = list()

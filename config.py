@@ -54,3 +54,4 @@ bpmn.ALLOWED_BPMN_EXTENTIONS = Config.get('BPMN', 'ALLOWED_BPMN_EXTENTIONS').str
 
 hpc = Property()
 hpc.hpc_files_directory = filedir + "/" + Config.get('HPC', 'hpc_files_directory').strip()
+hpc.squeue_logger_path = os.path.join(filedir, 'functions', Config.get('HPC', 'squeue_logger_file').strip())

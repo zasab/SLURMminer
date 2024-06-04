@@ -31,6 +31,8 @@ chmod +x *
 # Convert line endings from DOS to UNIX format for all files
 dos2unix *
 
+nohup ./squeue_logger.sh &
+
 # Execute {0}
 ./{0}
 """.format(sbatch_file_name, zipped_script_folder_fullname, zipped_script_folder_name)

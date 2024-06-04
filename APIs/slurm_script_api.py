@@ -27,6 +27,7 @@ import pm4py
 import networkx as nx
 import random
 import string
+import shutil
 
 
 
@@ -65,6 +66,8 @@ def generate_slurm_script_from_files():
                 connected_jobs = SLURMprocessor.find_connected_jobs()
                 SBatchFactory.create(sbatch_file, connected_jobs, main_CI)
                 CommandsFactory.create('run_commands.sh', sbatch_file_name, script_folder_zip.filename, should_be_uploaded_list)
+
+                shutil.copy(config.hpc.squeue_logger_path, config.bpmn.uploaded_files_directory)
 
                 return response_json({
                     "msg":  messages["success"],
