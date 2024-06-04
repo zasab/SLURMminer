@@ -17,6 +17,7 @@ def parse(script_dir):
     else:
         output_file = ''
 
+    print("output_file: ", output_file)
     inputs_dict = {}
     if len(input_files) > 0:
         for input_file in input_files:
@@ -24,17 +25,17 @@ def parse(script_dir):
             with open(input_file_path, 'r') as file:
                 content = file.readline().strip()
                 base_name = os.path.splitext(input_file)[0]
-                print()
-                print("base_name: ", base_name)
-                print()
                 processed_base_name = base_name.split('/')
-                print("processed_base_name: ", processed_base_name)
                 inputs_dict[processed_base_name[-1]] = content
+                print("inputs_dict: ", inputs_dict)
 
     end_of_arguments = len(input_files) + 3
-    script_arguments = sys.argv[1:-end_of_arguments]
+    input_and_output_folder = sys.argv[-end_of_arguments-1]
+    print("input_and_output_folder: ", input_and_output_folder)
+    script_arguments = sys.argv[1:-end_of_arguments-1]
+    print("script_arguments: ", script_arguments)
 
-    return inputs_dict, output_file, script_arguments
+    return inputs_dict, output_file, input_and_output_folder, script_arguments
 
 def output_generator(output_file_path, new_output):
     if os.path.exists(output_file_path):

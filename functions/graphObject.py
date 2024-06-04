@@ -141,32 +141,11 @@ class JOB:
         """Remove all job instances."""
         cls._instances.clear()
 
-def get_command_from_label(task):
-    label = task.label
-    command =  label
-    if '__aff_iloop__' in label:
-        parts = label.split('__aff_iloop__')
-        if len(parts) > 1:
-            command = parts[1]
-    elif '__aff_eloop__' in label:
-        parts = label.split('__aff_eloop__')
-        if len(parts) > 1:
-            command = parts[1]
-    
-    command_parts = command.split('=')
-    if len(command_parts)>1:
-        command = command_parts[1].strip()
-        output = command_parts[0].strip()
-    else:
-        command = command_parts[0].strip()
-        output = None
-
-    return command
-
-def get_job_application_from_label(task):
-    task_label = task.label
-    command = task_label.split('.')[0] if '.' in task_label else task_label
-    return command.strip()
+    @classmethod
+    def remove_job_by_id(cls, job_id):
+        """Remove the job instance with the specified job_id."""
+        cls._instances = [job for job in cls._instances if job.get_job_id() != job_id]
+        return True
 
 def get_transition(net, node):
     for tran in net.transitions:
@@ -360,6 +339,35 @@ def extract_dependencies(input_str):
     striped_split_dependency_list = [[sub_item.strip() for sub_item in sublist] for sublist in split_dependency_list]
     
     return striped_split_dependency_list, sub_text_of_dependecies
+
+
+def get_job_application_from_label(task):
+    task_label = task.label
+    command = task_label.split('.')[0] if '.' in task_label else task_label
+    return command.strip()
+
+
+def get_command_from_label(task):
+    label = task.label
+    command =  label
+    if '__aff_iloop__' in label:
+        parts = label.split('__aff_iloop__')
+        if len(parts) > 1:
+            command = parts[1]
+    elif '__aff_eloop__' in label:
+        parts = label.split('__aff_eloop__')
+        if len(parts) > 1:
+            command = parts[1]
+    
+    command_parts = command.split('=')
+    if len(command_parts)>1:
+        command = command_parts[1].strip()
+        output = command_parts[0].strip()
+    else:
+        command = command_parts[0].strip()
+        output = None
+
+    return command
 
 def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_dep_list, should_be_uploaded_list):
     # based on the name of the application needs to be run on SLURM and the task id we generate a unique a name for our bash file

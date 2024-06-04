@@ -8,7 +8,7 @@ sys.path.insert(1, basedir)
 import command_parser
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-inputs_dict, output_file, script_arguments = command_parser.parse(script_dir)
+inputs_dict, output_file, input_and_output_folder, script_arguments = command_parser.parse(script_dir)
 print("inputs_dict: ", inputs_dict)
 print("output_file: ", output_file)
 print("script_arguments: ", script_arguments)

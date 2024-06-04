@@ -11,4 +11,4 @@ def hash_to_4_digit_number(input_string):
 def get_unique_number_added_to_job_id(task):
     task_name = task.name
     task_name1 = task_name.replace(" ", "_")
-    return str(hash_to_4_digit_number(task_name1)) 
+    return str(hash_to_4_digit_number(task_name1))

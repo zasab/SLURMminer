@@ -564,9 +564,19 @@ def process_conditions(bpmn_graph):
         SLURM_app = hidden_flow_details['SLURM_app']
         SLURM_pure_app = SLURM_app.replace("SLURM:", "").strip()
         new_node = BPMN.Task(name=SLURM_pure_app)
+
         job_id = 'job_id_' + str(common_functions.get_unique_number_added_to_job_id(new_node))
         JOB(task=new_node, job_id=job_id)
         JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, new_node)
+
+        unique_number_added_to_job_id = job_id.split('job_id_')[1]
+
+        command = SLURM_pure_app
+        JOB.set_application_by_job_id(job_id, command)
+
+        srun_file_name = unique_number_added_to_job_id + "_" + SLURM_pure_app.split('.')[0] + '.sh'
+        JOB.set_srun_file_name_by_job_id(job_id, srun_file_name)
+
         new_nodes.add(new_node)
 
         source_node = hidden_flow_details['source_node']
