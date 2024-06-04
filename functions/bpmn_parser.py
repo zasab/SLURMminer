@@ -8,20 +8,7 @@ from functions import storageprocessor
 import string
 import ast
 from functions.graphObject import JOB
-import hashlib
-
-def hash_to_4_digit_number(input_string):
-    hashed = hashlib.sha256(input_string.encode()).hexdigest()
-    first_4_chars = hashed[:4]
-    decimal_number = int(first_4_chars, 16)
-    four_digit_number = decimal_number % 10000
-    
-    return four_digit_number
-
-def get_unique_number_added_to_job_id(task):
-    task_name = task.name
-    task_name1 = task_name.replace(" ", "_")
-    return str(hash_to_4_digit_number(task_name1)) 
+from functions import common_functions
 
 random_strings = set()
 def generate_random_string(length):
@@ -129,7 +116,7 @@ def process_single_value_arguments(bpmn_graph):
             new_node = BPMN.Task(name=new_node_command)
             new_nodes.add(new_node)
             data_object_factory(bpmn_graph, new_node, node)
-            job_id = 'job_id_' + str(get_unique_number_added_to_job_id(new_node))
+            job_id = 'job_id_' + str(common_functions.get_unique_number_added_to_job_id(new_node))
             JOB(task=new_node, job_id=job_id)
             JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, node)
             new_annotation_lists[new_node] = new_arguments_list                
@@ -271,7 +258,7 @@ def process_explicit_loops(bpmn_graph):
 
                 new_activity = BPMN.Task(name=new_activity_name)
                 data_object_factory(bpmn_graph, new_activity, activity_with_loop)
-                job_id = 'job_id_' + str(get_unique_number_added_to_job_id(new_activity))
+                job_id = 'job_id_' + str(common_functions.get_unique_number_added_to_job_id(new_activity))
                 JOB(task= new_activity, job_id=job_id)
                 JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, activity_with_loop)
 
@@ -429,7 +416,7 @@ def process_hidden_loops(bpmn_graph):
             new_activity = BPMN.Task(name=new_activity_name)
 
             data_object_factory(bpmn_graph, new_activity, activity_with_iteration)
-            job_id = 'job_id_' + str(get_unique_number_added_to_job_id(new_activity))
+            job_id = 'job_id_' + str(common_functions.get_unique_number_added_to_job_id(new_activity))
             JOB(task=new_activity, job_id=job_id)
             JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, activity_with_iteration)
 
@@ -507,7 +494,7 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
                 else:
                     target_new_node = BPMN.Task(name=target_new_node_name)
                     data_object_factory(bpmn_graph, target_new_node, target_node)
-                    job_id = 'job_id_' + str(get_unique_number_added_to_job_id(target_new_node))
+                    job_id = 'job_id_' + str(common_functions.get_unique_number_added_to_job_id(target_new_node))
                     JOB(task=target_new_node, job_id=job_id)
                     JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, target_node)
 
@@ -577,7 +564,7 @@ def process_conditions(bpmn_graph):
         SLURM_app = hidden_flow_details['SLURM_app']
         SLURM_pure_app = SLURM_app.replace("SLURM:", "").strip()
         new_node = BPMN.Task(name=SLURM_pure_app)
-        job_id = 'job_id_' + str(get_unique_number_added_to_job_id(new_node))
+        job_id = 'job_id_' + str(common_functions.get_unique_number_added_to_job_id(new_node))
         JOB(task=new_node, job_id=job_id)
         JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, new_node)
         new_nodes.add(new_node)

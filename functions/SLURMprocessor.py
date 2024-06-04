@@ -4,7 +4,9 @@ filedir = dirname(abspath(__file__))
 basedir = dirname(dirname(abspath(__file__)))
 sys.path.insert(1, basedir)
 from functions import bpmn_parser
-from functions import graphObject
+from functions.graphObject import JOB
+from pm4py.objects.bpmn.obj import BPMN
+from functions import common_functions
 
 def preprocessing_bpmn(bpmn_file_path):
     bpmn_graph = bpmn_parser.extract_bpmn_information(bpmn_file_path)
@@ -20,55 +22,16 @@ def preprocessing_bpmn(bpmn_file_path):
     bpmn_graph_processed_hidden_loops = bpmn_parser.process_hidden_loops(bpmn_graph_processed_explicit_loops)
     print("process_hidden_loops is finished....")
 
-    # combined_affected_nodes = affected_nodes1.union(affected_nodes2, affected_nodes3)
-    # post_processed_nodes_bpmn_graph = bpmn_parser.remove_nodes_through(bpmn_graph_processed_hidden_loops, combined_affected_nodes)
-    # print("affected nodes are removed....")
-    # print()
-
     return bpmn_graph_processed_hidden_loops
 
-# def upload_and_run_exefile_on_SLURM(local_exe_filename, remoteserver_info, should_be_uploaded_list, script_folder_zip):
-#     try:
-#         REMOTE_FOLDER_NAME = config.remoteserver.REMOTE_FOLDER_NAME
-#         HOST_SERVER = remoteserver_info['serverhost']
-#         USERNAME_RWTH = remoteserver_info['username']
-#         PASSWORD_PATH = remoteserver_info['password']
-#         LOCAL_RUNNABLE_FILE_PATH = should_be_uploaded_list[-1]
-#         cnopts = pysftp.CnOpts()
-#         cnopts.hostkeys = None
-#         srv = ssh_connection.My_Connection(host=HOST_SERVER, username= USERNAME_RWTH, 
-#         password= PASSWORD_PATH , cnopts=cnopts)
+def postprocessing_bpmn(processed_bpmn):
+    job_tasks = {job.get_task() for job in JOB.get_all_jobs()}
+    _nodes = processed_bpmn.__dict__['_BPMN__nodes']
+    for node in _nodes:
+        if isinstance(node, BPMN.Task):
+            if node not in job_tasks:
+                job_id = 'job_id_' + str(common_functions.get_unique_number_added_to_job_id(node))
+                JOB(task=node, job_id=job_id)
+                JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, node)
 
-#         ssh1 = ssh_connection.get_ssh_client(HOST_SERVER, USERNAME_RWTH, PASSWORD_PATH)
-#         ssh_stdin0, ssh_stdout0, ssh_stderr0 = ssh1.exec_command("mkdir {}".format(REMOTE_FOLDER_NAME))
-
-#         with srv.cd('{}/'.format(REMOTE_FOLDER_NAME)):
-#             srv.put(LOCAL_RUNNABLE_FILE_PATH)
-#             for i in range(len(should_be_uploaded_list)-1):
-#                 srv.put(should_be_uploaded_list[i])
-
-            
-#         srv.close()
-
-#         REMOTE_RUNABLE_FILENAME = local_exe_filename
-#         print("****"*20)
-#         print("REMOTE_FOLDER_NAME: ", REMOTE_FOLDER_NAME)
-#         for uploaded_file in should_be_uploaded_list:
-#             uploaded_file_name = uploaded_file.split('/')[-1]
-#             ssh_stdin, ssh_stdout, ssh_stderr = ssh1.exec_command("cd {}/ && chmod +x {}".format(REMOTE_FOLDER_NAME, uploaded_file_name))
-#             print(ssh_stdout.read().decode())
-#         ssh_stdin0, ssh_stdout0, ssh_stderr0 = ssh1.exec_command("dos2unix {}/*".format(REMOTE_FOLDER_NAME))
-#         # do not remove this print line
-#         print(ssh_stdout0.read().decode())
-#         ssh_stdin1, ssh_stdout1, ssh_stderr1 = ssh1.exec_command("cd {}/ && unzip -o {}".format(REMOTE_FOLDER_NAME, script_folder_zip))
-#         print(ssh_stdout1.read().decode())
-#         ssh_stdin2, ssh_stdout2, ssh_stderr2 = ssh1.exec_command("cd {}/ && chmod +x {}/{}".format(REMOTE_FOLDER_NAME, str(script_folder_zip).split('.')[0], '*'))
-#         print(ssh_stdout2.read().decode())
-#         ssh_stdin3, ssh_stdout3, ssh_stderr3 = ssh1.exec_command("cd {}/ && dos2unix {}".format(REMOTE_FOLDER_NAME, REMOTE_RUNABLE_FILENAME))
-#         print(ssh_stdout3.read().decode())
-#         ssh_stdin4, ssh_stdout4, ssh_stderr4 = ssh1.exec_command("cd {}/ && chmod +x {}".format(REMOTE_FOLDER_NAME, REMOTE_RUNABLE_FILENAME))
-#         print(ssh_stdout4.read().decode())
-#         ssh_stdin5, ssh_stdout5, ssh_stderr5 = ssh1.exec_command("cd {}/ && ./{}".format(REMOTE_FOLDER_NAME, REMOTE_RUNABLE_FILENAME))
-
-#     except Exception as e:
-#         print(e)
+    return processed_bpmn

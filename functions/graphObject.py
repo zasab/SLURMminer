@@ -98,7 +98,6 @@ class JOB:
         """Set the dependency_script value for the job with the given job_id."""
         for job in cls._instances:
             if job.get_job_id() == job_id:
-                print(f"{new_application} is set .......")
                 job.set_application(new_application)
                 return True
         return False
@@ -141,19 +140,6 @@ class JOB:
     def remove_all_jobs(cls):
         """Remove all job instances."""
         cls._instances.clear()
-
-def hash_to_4_digit_number(input_string):
-    hashed = hashlib.sha256(input_string.encode()).hexdigest()
-    first_4_chars = hashed[:4]
-    decimal_number = int(first_4_chars, 16)
-    four_digit_number = decimal_number % 10000
-    
-    return four_digit_number
-
-def get_unique_number_added_to_job_id(task):
-    task_name = task.name
-    task_name1 = task_name.replace(" ", "_")
-    return str(hash_to_4_digit_number(task_name1))
 
 def get_command_from_label(task):
     label = task.label
@@ -380,6 +366,7 @@ def add_dependency(task, run_inputs, depend_script, job_ids, processed_tasks, j_
     # that contains srun and parameter settings
 
     task_name = task.name
+
     for job in JOB.get_all_jobs():
         job_task = job.get_task()
         if job_task.id == task_name:
@@ -467,37 +454,33 @@ def output_and_input_files_factory(bpmn):
     node_ids = [node.id for node in _nodes]
 
     for data_object in _BPMN__data_objects:
-        print()
-        print()
         data_object_details = _BPMN__data_objects[data_object]
         data_obj_name = data_object_details['name']
         source_ref_id = data_object_details['source_ref']
         target_ref_ids = data_object_details['target_ref']
         if source_ref_id in node_ids:
-            for target_ref_id in target_ref_ids:
-                if target_ref_id in node_ids:
-                    print("data_object_details: ", data_object_details)
-                    for job in JOB.get_all_jobs():
-                        job_task = job.get_task()
-                        job_task_id = job_task.id
-                        job_id = job.get_job_id()
-                        if job_task_id == source_ref_id:
-                            print(job_task)
-                            job.add_output_file_by_job_id(job_id, data_obj_name)
+            if len(target_ref_ids) == 0:
+                for job in JOB.get_all_jobs():
+                    job_task = job.get_task()
+                    job_task_id = job_task.id
+                    job_id = job.get_job_id()
+                    if job_task_id == source_ref_id:
+                        job.add_output_file_by_job_id(job_id, data_obj_name)
+            else:
+                for target_ref_id in target_ref_ids:
+                    if target_ref_id in node_ids:
+                        for job in JOB.get_all_jobs():
+                            job_task = job.get_task()
+                            job_task_id = job_task.id
+                            job_id = job.get_job_id()
+                            if job_task_id == source_ref_id:
+                                job.add_output_file_by_job_id(job_id, data_obj_name)
 
-                        if job_task_id == target_ref_id:
-                            job.add_input_file_by_job_id(job_id, data_obj_name)
-        elif source_ref_id in node_ids and len(target_ref_id)==0:
-            for job in JOB.get_all_jobs():
-                job_task = job.get_task()
-                job_task_id = job_task.id
-                job_id = job.get_job_id()
-                if job_task_id == source_ref_id:
-                    job.add_output_file_by_job_id(job_id, data_obj_name)
+                            if job_task_id == target_ref_id:
+                                job.add_input_file_by_job_id(job_id, data_obj_name)
         elif len(source_ref_id)==0:
             for target_ref_id in target_ref_ids:
                 if target_ref_id in node_ids:
-                    print("data_object_details: ", data_object_details)
                     for job in JOB.get_all_jobs():
                         job_task = job.get_task()
                         job_task_id = job_task.id
