@@ -12,10 +12,6 @@ import command_parser
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 inputs_dict, output_file, input_and_output_folder, script_arguments = command_parser.parse(script_dir)
-print("inputs_dict: ", inputs_dict)
-print("output_file: ", output_file)
-print("script_arguments: ", script_arguments)
-print()
 # #-------------------------------------------------
 
 log_name = script_arguments[0]
@@ -23,4 +19,4 @@ log_path = os.path.join(script_dir, 'logs', log_name)
 
 #------------------------------------------------- outputs
 if output_file:
-    command_parser.output_generator(os.path.join(script_dir, output_file), log_path)
+    command_parser.output_generator(os.path.join(script_dir, output_file), "log_path", log_path)

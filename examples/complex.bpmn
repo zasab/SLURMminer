@@ -69,11 +69,11 @@
     </bpmn:textAnnotation>
     <bpmn:association id="Association_0udg33z" associationDirection="None" sourceRef="Activity_1t2tt0w" targetRef="TextAnnotation_0vgv8t5" />
     <bpmn:textAnnotation id="TextAnnotation_025pkyd">
-      <bpmn:text>noise:['0.4']</bpmn:text>
+      <bpmn:text>noise:[0.4]</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:association id="Association_00l4you" associationDirection="None" sourceRef="Activity_03cf5dk" targetRef="TextAnnotation_025pkyd" />
     <bpmn:textAnnotation id="TextAnnotation_050gbq2">
-      <bpmn:text>noise:['0.2']</bpmn:text>
+      <bpmn:text>noise:[0.2]</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:association id="Association_1cqzx3d" associationDirection="None" sourceRef="Activity_0qf0d3b" targetRef="TextAnnotation_050gbq2" />
   </bpmn:process>
@@ -106,14 +106,14 @@
       <bpmndi:BPMNShape id="Gateway_1j1rda3_di" bpmnElement="Gateway_1j1rda3" isMarkerVisible="true">
         <dc:Bounds x="915" y="335" width="50" height="50" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_061s3eq_di" bpmnElement="Event_061s3eq">
-        <dc:Bounds x="1032" y="342" width="36" height="36" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="DataObjectReference_03cpybl_di" bpmnElement="DataObjectReference_03cpybl">
         <dc:Bounds x="432" y="160" width="36" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="422" y="143" width="56" height="14" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_061s3eq_di" bpmnElement="Event_061s3eq">
+        <dc:Bounds x="1032" y="342" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_0vgv8t5_di" bpmnElement="TextAnnotation_0vgv8t5">
         <dc:Bounds x="140" y="430" width="420" height="30" />

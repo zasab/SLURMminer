@@ -119,6 +119,10 @@ def process_single_value_arguments(bpmn_graph):
             job_id = 'job_id_' + str(common_functions.get_unique_number_added_to_job_id(new_node))
             JOB(task=new_node, job_id=job_id)
             JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, node)
+            parent_job_id = JOB.get_job_id_by_task(node)
+            if JOB.get_choice_flag_by_id(parent_job_id):
+                JOB.set_choice_flag_by_id(job_id, True)
+
             new_annotation_lists[new_node] = new_arguments_list                
             corresponding_nodes[node] = new_node
             corresponding1[node]={new_node}
@@ -261,6 +265,10 @@ def process_explicit_loops(bpmn_graph):
                 job_id = 'job_id_' + str(common_functions.get_unique_number_added_to_job_id(new_activity))
                 JOB(task= new_activity, job_id=job_id)
                 JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, activity_with_loop)
+
+                parent_job_id = JOB.get_job_id_by_task(activity_with_loop)
+                if JOB.get_choice_flag_by_id(parent_job_id):
+                    JOB.set_choice_flag_by_id(job_id, True)
 
                 if activity_with_loop_annot:
                     bpmn_graph.add_node_annotation(new_activity, activity_with_loop_annot)
@@ -420,6 +428,10 @@ def process_hidden_loops(bpmn_graph):
             JOB(task=new_activity, job_id=job_id)
             JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, activity_with_iteration)
 
+            parent_job_id = JOB.get_job_id_by_task(activity_with_iteration)
+            if JOB.get_choice_flag_by_id(parent_job_id):
+                JOB.set_choice_flag_by_id(job_id, True)
+            
             if activity_with_iteration not in correspondings3:
                 correspondings3[activity_with_iteration] = {new_activity}
             else:
@@ -498,6 +510,10 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
                     JOB(task=target_new_node, job_id=job_id)
                     JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, target_node)
 
+                    parent_job_id = JOB.get_job_id_by_task(target_node)
+                    if JOB.get_choice_flag_by_id(parent_job_id):
+                        JOB.set_choice_flag_by_id(job_id, True)
+                    
                 if target_node not in correspondings3:
                     correspondings3[target_node] = {target_new_node}
                 else:
@@ -569,6 +585,10 @@ def process_conditions(bpmn_graph):
         JOB(task=new_node, job_id=job_id)
         JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, new_node)
 
+        parent_job_id = JOB.get_job_id_by_task(new_node)
+        if JOB.get_choice_flag_by_id(parent_job_id):
+            JOB.set_choice_flag_by_id(job_id, True)
+
         unique_number_added_to_job_id = job_id.split('job_id_')[1]
 
         command = SLURM_pure_app
@@ -576,15 +596,17 @@ def process_conditions(bpmn_graph):
 
         srun_file_name = unique_number_added_to_job_id + "_" + SLURM_pure_app.split('.')[0] + '.sh'
         JOB.set_srun_file_name_by_job_id(job_id, srun_file_name)
+        JOB.set_choice_flag_by_id(job_id, True)
 
         new_nodes.add(new_node)
 
         source_node = hidden_flow_details['source_node']
-        for flow in flows:
-            if flow.target == source_node:
-                new_flow_tupple1 = (flow.source, new_node)
-                new_flows.add(new_flow_tupple1)
-                affected_flows.add((flow.source, source_node))
+        # for flow in flows:
+            # if flow.target == source_node:
+                # new_flow_tupple1 = (flow.source, new_node)
+        new_flow_tupple1 = (source_node, new_node)
+        new_flows.add(new_flow_tupple1)
+                # affected_flows.add((flow.source, source_node))
                 
         target_node = hidden_flow_details['target_node']
         new_flow_tupple2 = (new_node, target_node)

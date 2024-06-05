@@ -53,17 +53,17 @@ def generate_slurm_script_from_files():
                 processed_bpmn = SLURMprocessor.postprocessing_bpmn(preprocessed_processed_bpmn)
 
                 net, im, fm = pm4py.convert_to_petri_net(processed_bpmn)
-                # pm4py.view_petri_net(net, im, fm)
+                pm4py.view_petri_net(net, im, fm)
 
-                depend_script, should_be_uploaded_list = graphObject.create(net, im, fm, processed_bpmn)
-                SRunFactory_new.create(should_be_uploaded_list, processed_bpmn)
+                depend_script, should_be_uploaded_list, connected_jobs = graphObject.create(net, im, fm, processed_bpmn)
+                SRunFactory_new.create(should_be_uploaded_list)
 
                 sbatch_file_name = bpmn_file.filename.split('.')[0] + ".sh"
                 sbatch_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, sbatch_file_name)
                 should_be_uploaded_list.add(sbatch_file_path)
                 sbatch_file = open(sbatch_file_path, 'w')
                 main_CI = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
-                connected_jobs = SLURMprocessor.find_connected_jobs()
+
                 SBatchFactory.create(sbatch_file, connected_jobs, main_CI)
                 CommandsFactory.create('run_commands.sh', sbatch_file_name, script_folder_zip.filename, should_be_uploaded_list)
 

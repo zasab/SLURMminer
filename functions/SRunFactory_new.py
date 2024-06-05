@@ -33,31 +33,24 @@ fi
 
     srun_file.write(text1 + text2)
 
-def create(should_be_uploaded_list, bpmn):
-    _nodes = bpmn.__dict__['_BPMN__nodes']
-    _tasks = set()
-    for _node in _nodes:
-        if isinstance(_node, BPMN.Task):
-            _tasks.add(_node)
-
+def create(should_be_uploaded_list):
     for job in JOB.get_all_jobs():
-        job_task = job.get_task()
-        if job_task in _tasks:
-            # print()
-            # print("task: ", job_task)
-            # print("job id: ", job.get_job_id())
-            # print("application: ", job.get_application())
-            # print("srun_file_name: ", job.get_srun_file_name())
-            # print("input_files: ", job.get_input_files())
-            # print("output_file: ", job.get_output_file())
-            # print("dependency_script: ", job.get_dependency_script())
-            # print()
-            # new_command = f"{job.get_application()}{' ' +' '.join(job.get_input_files()) if job.get_input_files() else ''} {len(job.get_input_files())}{' ' +job.get_output_file()[0] if job.get_output_file() else ''} {len(job.get_output_file())}"
-            new_command = f"{job.get_application()}{' $FILES_DIR'}{' ' +' '.join(['$FILES_DIR/'+file for file in job.get_input_files()]) if job.get_input_files() else ''} {len(job.get_input_files())}{' ' +' '.join(['$FILES_DIR/'+file for file in job.get_output_file()]) if job.get_output_file() else ''} {len(job.get_output_file())}"
-            srun_file_name = job.get_srun_file_name()
-            srun_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, srun_file_name)
-            should_be_uploaded_list.add(srun_file_path)
-            srun_file = open(srun_file_path, 'w')
-            srun_file_content(srun_file, srun_file_name, new_command)
-        else:
-            JOB.remove_job_by_id(job.get_job_id())
+        # if job.get_choice_flag():
+        #     print()
+        #     job_task = job.get_task()
+        #     print("task: ", job_task)
+        #     print("job id: ", job.get_job_id())
+        #     print("choice_flag: ", job.get_choice_flag())
+        #     print("application: ", job.get_application())
+        #     print("srun_file_name: ", job.get_srun_file_name())
+        #     print("input_files: ", job.get_input_files())
+        #     print("output_file: ", job.get_output_file())
+        #     print("dependency_script: ", job.get_dependency_script())
+        #     print()
+        # new_command = f"{job.get_application()}{' ' +' '.join(job.get_input_files()) if job.get_input_files() else ''} {len(job.get_input_files())}{' ' +job.get_output_file()[0] if job.get_output_file() else ''} {len(job.get_output_file())}"
+        new_command = f"{job.get_application()}{' $FILES_DIR'}{' ' +' '.join(['$FILES_DIR/'+file for file in job.get_input_files()]) if job.get_input_files() else ''} {len(job.get_input_files())}{' ' +' '.join(['$FILES_DIR/'+file for file in job.get_output_file()]) if job.get_output_file() else ''} {len(job.get_output_file())}"
+        srun_file_name = job.get_srun_file_name()
+        srun_file_path = "{}/{}".format(config.bpmn.uploaded_files_directory, srun_file_name)
+        should_be_uploaded_list.add(srun_file_path)
+        srun_file = open(srun_file_path, 'w')
+        srun_file_content(srun_file, srun_file_name, new_command)
