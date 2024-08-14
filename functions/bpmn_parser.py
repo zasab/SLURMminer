@@ -383,6 +383,18 @@ def process_iterative_flow_details(flows, hidden_flow_details, _BPMN__node_annot
     combinations = BpmnUtils.generate_combinations(iteration_info_dict)      
     return start_of_loop, activity_with_iteration, combinations, end_of_loop, incomings, outgoings
 
+def connected_nodes(start, end, flows, __connected_nodes):
+    for flow in flows:
+        if flow.source == start:
+            if flow.target != end:
+                __connected_nodes.add(flow.target)
+                connected_nodes(flow.target, end, flows, __connected_nodes)
+        
+    
+    return __connected_nodes
+
+
+
 def process_hidden_loops(bpmn_graph):
     bpmn_info = bpmn_graph.__dict__
     nodes = bpmn_info['_BPMN__nodes']
@@ -406,6 +418,9 @@ def process_hidden_loops(bpmn_graph):
 
         affected_nodes_to_remove.add(start_of_loop)
         affected_nodes_to_remove.add(end_of_loop)
+
+        __connected_nodes = set()
+        __connected_nodes = connected_nodes(start_of_loop, end_of_loop, flows, __connected_nodes)
 
         new_start_name = 'S_AND__' + common_functions.generate_unique_hash(str(start_of_loop.id))
         new_start = BPMN.ParallelGateway(name=new_start_name)
@@ -448,10 +463,9 @@ def process_hidden_loops(bpmn_graph):
 
             all_new_activities[new_activity]=con_str
             new_tupplee3 = (new_start, new_activity)
-            # new_start_flow = BPMN.SequenceFlow(new_start, new_activity)
             all_new_flows.add(new_tupplee3)
             affected_nodes_to_remove.add(activity_with_iteration)
-            replicate_sub_nodes(bpmn_graph, start_of_loop, {activity_with_iteration}, {new_activity}, flows, end_of_loop, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings3, before_last_nodes)
+            replicate_sub_nodes(bpmn_graph, start_of_loop, {activity_with_iteration}, {new_activity}, flows, end_of_loop, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings3, before_last_nodes, __connected_nodes)
         
         before_last_nodes_corresponding = correspondings3[before_last_nodes[0]]
 
@@ -478,7 +492,8 @@ def process_hidden_loops(bpmn_graph):
     
     return bpmn_graph
         
-def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_going_to_replicate, new_activities, flows, end, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings3, before_last_nodes):
+def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_going_to_replicate, new_activities, flows, end, new_end, all_new_activities, 
+                        all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings3, before_last_nodes, __connected_nodes):
     bpmn_obj = bpmn_graph.__dict__
     _BPMN__node_annotations = bpmn_obj['_BPMN__node_annotations']
     
@@ -507,8 +522,15 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
                 
                 target_new_node_name = random_string2 + '__aff_iloop__' + target_node.name
                 
+                __input_nodes = return_input_nodes_in_BPMN(target_node, flows)
+                __excluded_input_nodes = set()
+                #TODO __excluded_output_nodes
+                for __input_node in __input_nodes:
+                    if __input_node not in __connected_nodes:
+                        __excluded_input_nodes.add(__input_node)
                 if isinstance(target_node, BPMN.ParallelGateway):
                     target_new_node = BPMN.ParallelGateway(name=target_new_node_name)
+                    
                 elif isinstance(target_node, BPMN.ExclusiveGateway):
                     target_new_node = BPMN.ExclusiveGateway(name=target_new_node_name)
                 else:
@@ -521,6 +543,10 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
                     parent_job_id = JOB.get_job_id_by_task(target_node)
                     if JOB.get_choice_flag_by_id(parent_job_id):
                         JOB.set_choice_flag_by_id(job_id, True)
+
+                for __excluded_input_node in __excluded_input_nodes:
+                    ex_flow_tuple = (__excluded_input_node, target_new_node)
+                    all_new_flows.add(ex_flow_tuple)
                     
                 if target_node not in correspondings3:
                     correspondings3[target_node] = {target_new_node}
@@ -548,7 +574,7 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
                 before_last_nodes.append(flow_i.source)
     
     if target_nodes:
-        replicate_sub_nodes(bpmn_graph, start_of_loop, target_nodes, source_nodes, flows, end, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings3, before_last_nodes)
+        replicate_sub_nodes(bpmn_graph, start_of_loop, target_nodes, source_nodes, flows, end, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings3, before_last_nodes, __connected_nodes)
 
 def check_if_there_is_flow_between(source, target, flows):
     flag = False
@@ -557,6 +583,22 @@ def check_if_there_is_flow_between(source, target, flows):
             flag = True
 
     return flag
+
+def return_input_nodes_in_BPMN(node, flows):
+    input_nodes = set()
+    for flow in flows:
+        if flow.target == node:
+            input_nodes.add(flow.source)
+
+    return input_nodes
+
+def return_output_nodes_in_BPMN(node, flows):
+    output_nodes = set()
+    for flow in flows:
+        if flow.source == node:
+            output_nodes.add(flow.target)
+
+    return output_nodes
 
 def find_key_by_value(my_dict, value):
     for key, val in my_dict.items():
