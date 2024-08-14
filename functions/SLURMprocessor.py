@@ -27,11 +27,21 @@ def preprocessing_bpmn(bpmn_file_path):
 def postprocessing_bpmn(processed_bpmn):
     job_tasks = {job.get_task() for job in JOB.get_all_jobs()}
     _nodes = processed_bpmn.__dict__['_BPMN__nodes']
+    _flows = processed_bpmn.__dict__['_BPMN__flows']
+    
     for node in _nodes:
         if isinstance(node, BPMN.Task):
             if node not in job_tasks:
                 job_id = 'job_id_' + str(common_functions.get_unique_number_added_to_job_id(node))
                 JOB(task=node, job_id=job_id)
                 JOB.set_corresponding_task_form_initial_bpmn_by_job_id(job_id, node)
+
+    # TODO
+    for __flow in _flows.copy():
+        if __flow.source in _nodes and __flow.target in _nodes:
+            pass
+        else:
+            processed_bpmn.remove_flow(__flow)
+            
 
     return processed_bpmn

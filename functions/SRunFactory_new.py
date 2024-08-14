@@ -23,10 +23,10 @@ srun python3 {1}
     
     text2 = """
 if [ $? -eq 0 ]; then
-    echo "0" >> "exit_code1_${SLURM_JOB_ID}.txt"
+    echo "0" >> "exit_code0_${SLURM_JOB_ID}.txt"
     exit 0
 else
-    echo "1" >> "exit_code2_${SLURM_JOB_ID}.txt"
+    echo "1" >> "exit_code1_${SLURM_JOB_ID}.txt"
     exit 1
 fi
 """
@@ -36,17 +36,17 @@ fi
 def create(should_be_uploaded_list):
     for job in JOB.get_all_jobs():
         # if job.get_choice_flag():
-        #     print()
-        #     job_task = job.get_task()
-        #     print("task: ", job_task)
-        #     print("job id: ", job.get_job_id())
-        #     print("choice_flag: ", job.get_choice_flag())
-        #     print("application: ", job.get_application())
-        #     print("srun_file_name: ", job.get_srun_file_name())
-        #     print("input_files: ", job.get_input_files())
-        #     print("output_file: ", job.get_output_file())
-        #     print("dependency_script: ", job.get_dependency_script())
-        #     print()
+        # print()
+        # job_task = job.get_task()
+        # print("task: ", job_task)
+        # print("job id: ", job.get_job_id())
+        # print("choice_flag: ", job.get_choice_flag())
+        # print("application: ", job.get_application())
+        # print("srun_file_name: ", job.get_srun_file_name())
+        # print("input_files: ", job.get_input_files())
+        # print("output_file: ", job.get_output_file())
+        # print("dependency_script: ", job.get_dependency_script())
+        # print()
         # new_command = f"{job.get_application()}{' ' +' '.join(job.get_input_files()) if job.get_input_files() else ''} {len(job.get_input_files())}{' ' +job.get_output_file()[0] if job.get_output_file() else ''} {len(job.get_output_file())}"
         new_command = f"{job.get_application()}{' $FILES_DIR'}{' ' +' '.join(['$FILES_DIR/'+file for file in job.get_input_files()]) if job.get_input_files() else ''} {len(job.get_input_files())}{' ' +' '.join(['$FILES_DIR/'+file for file in job.get_output_file()]) if job.get_output_file() else ''} {len(job.get_output_file())}"
         srun_file_name = job.get_srun_file_name()

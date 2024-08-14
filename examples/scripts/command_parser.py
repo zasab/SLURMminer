@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 
 def parse_files(args):
     number_of_output_files = int(args[-1])
@@ -63,3 +64,5 @@ def output_generator(output_file_path, key, value):
     else:
         with open(output_file_path, 'w') as file:
             file.write(f"{key}: {value}\n")
+
+    time.sleep(5)

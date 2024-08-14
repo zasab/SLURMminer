@@ -61,6 +61,13 @@ class JOB:
                 return job.get_output_file()
         return False
     
+    @classmethod
+    def get_output_file_by_task(cls, task):
+        for job in cls._instances:
+            if job.get_task() == task:
+                return job.get_output_file()
+        return False
+    
     def set_srun_file_name(self, srun_file_name):
         self.srun_file_name = srun_file_name
 
@@ -232,206 +239,8 @@ def find_choice_part_in_petrinet(places, source_trans, first_source_trans, uniqu
                                 new_source_trans.add(new_source_tran)
                                 find_choice_part_in_petrinet(places, new_source_trans, first_source_trans,  unique_trans)
 
-
-def go_foward_until_end_of_choice(net, first_tran, tran, choice_options):
-    places =  net.places
-    for place in places:
-        in_arcs = place.in_arcs
-        for in_arc in in_arcs:
-            if in_arc.source == tran:
-                out_arcs = place.out_arcs
-                for out_arc in out_arcs:
-                    if out_arc.target.label:
-                        choice_options[first_tran].add(out_arc.target)
-                        go_foward_until_end_of_choice(net, first_tran, out_arc.target, choice_options)
-                    else:
-                        go_foward_until_end_of_choice(net, first_tran, out_arc.target, choice_options)
-
-    
-                    
-def remove_common_elements(choice_options):
-    common_elements = set.intersection(*choice_options.values())
-    for key, value in choice_options.items():
-        choice_options[key] = value - common_elements
-    return choice_options
-
-def discard_alternatives(value, alternetives):
-    value_copy = value.copy()
-    for alternative_ in alternetives:
-        for alter_element in alternative_:
-            if alter_element in value_copy:
-                value_copy.discard(alter_element)
-
-    return value_copy
-
-def find_combination_of_choice_parts(all_unique_parts):
-    print("-----"*20)
-    combined_unique_parts = dict()
-    for unique_part_collection in all_unique_parts:
-        for key1, value1 in unique_part_collection.items():
-            combined_unique_parts[key1] = value1
-    
-    sorted_unique_parts = dict(sorted(combined_unique_parts.items(), key=lambda item: len(item[1]), reverse=True))
-    
-    final_runs_unique_parts = list()
-    for key, value in sorted_unique_parts.items():
-        nested_run = False
-        for val in value:
-            if val != key:
-                if val in sorted_unique_parts:
-                    nested_run = True
-        
-        if nested_run:
-            print()
-            print("++++"*20)
-            probably_cannot_be_run_together = list()
-            for unique_part_collection2 in all_unique_parts:
-                choices = list()
-                for key2, val2 in unique_part_collection2.items():
-                    choices.append(val2)
-
-                if len(choices)>0:
-                    probably_cannot_be_run_together.append(choices)
-
-            unique_set_of_elements = list()
-            for val in list(value):
-                if val != key:
-                    if val in sorted_unique_parts:
-                        the_choice, alternetives = find_alternetives(val, probably_cannot_be_run_together, combined_unique_parts)
-                        value_copy = discard_alternatives(value, alternetives)                        
-
-                        print()
-                        the_choice_task = list(the_choice)[0]
-                        print("the_choice_task: ", the_choice_task)
-                        for job in JOB.get_all_jobs():
-                            job_task = job.get_task()
-                            if the_choice_task.name == job_task.id:
-                                the_choice_corersponding_task = job.get_corresponding_task_from_initial_bpmn()
-                                for val_copy in value_copy:
-                                    if val_copy != the_choice_task:
-                                        for job2 in JOB.get_all_jobs():
-                                            job2_task = job2.get_task()
-                                            if val_copy.name == job2_task.id:
-                                                val_copy_corersponding_task = job2.get_corresponding_task_from_initial_bpmn()
-                                                if the_choice_corersponding_task == val_copy_corersponding_task:
-                                                    print("val_copy", val_copy)
-                                                    the_choice_val_copy, alternetives_val_copy = find_alternetives(val_copy, probably_cannot_be_run_together, combined_unique_parts)
-                                                    value_copy2 = discard_alternatives(value_copy, alternetives_val_copy)
-
-                        if value_copy2 not in unique_set_of_elements:
-                            unique_set_of_elements.append(value_copy2)
-
-
-            
-            for itemmmm in unique_set_of_elements:
-                print()
-                print()
-                print()
-                for nnnn in itemmmm:
-                    print("____: ", nnnn.label)
-
-
-    #         nested_parts = list()
-    #         for val in list(value):
-    #             if val != key:
-    #                 if val in sorted_unique_parts:
-    #                     val_value = sorted_unique_parts[val]
-    #                     nested_parts.append(val_value)
-    #                     for item in val_value:
-    #                         value.discard(item)
-            
-    #         for nested_part in nested_parts:
-    #             combined_set = value.union(nested_part)
-    #             final_runs_unique_parts.append(combined_set)
-            print("++++"*20)
-            print()
-        else:
-            print("there is no nested node")
-            final_runs_unique_parts.append(value)
-
-    return final_runs_unique_parts
-
-def find_alternetives(node, probably_cannot_be_run_together, combined_unique_parts):
-    the_choice = list()
-    alternetives = list()
-    for item in probably_cannot_be_run_together:
-        for choice in item:
-            for element in choice:
-                if element == node:
-                    the_choice = combined_unique_parts[element]
-
-        if the_choice in item:
-            alternetives = [element for element in item if element != the_choice]
-
-    return the_choice, alternetives
-
-def find_runs2(net, im, fm):
-    places = net.places
-    all_unique_parts = list()
-    for place in places:
-        if len(place.out_arcs) > 1:
-            output_trans_labels = list()
-            for out_arc in place.out_arcs:
-                if out_arc.target.label:
-                    output_trans_labels.append(out_arc.target)
-
-            if len(output_trans_labels) > 1:
-                choice_options = {}
-                for output_tran in output_trans_labels:
-                    choice_options[output_tran]=set()
-                    choice_options[output_tran].add(output_tran)
-                    go_foward_until_end_of_choice(net, output_tran, output_tran, choice_options)
-                
-                unique_parts = remove_common_elements(choice_options)
-                
-                all_unique_parts.append(unique_parts)  
-    
-    final_runs_unique_parts = find_combination_of_choice_parts(all_unique_parts) 
-
-    #     in_arcs = place.in_arcs
-    #     if len(in_arcs) > 0:
-    #         if len(in_arcs) > 1:
-    #             source_trans = set()
-    #             for in_arc in in_arcs:
-    #                 source_tran = in_arc.source
-    #                 if source_tran.label:
-    #                     source_trans.add(source_tran)
-
-    #             if len(source_trans) > 1:
-    #                 find_choice_part_in_petrinet(places, source_trans, source_trans, unique_trans)
-    #             else:
-    #                 continue
-
-    # transitions = net.transitions
-    # visible_transitions = set()
-    # for transition in transitions:
-    #     if transition.label:
-    #         visible_transitions.add(transition)
-
-    # unique_trans_tuples = {tuple([key] + list(values)) for key, values in unique_trans.items()}
-    # flat_set = {element for subset in unique_trans_tuples for element in subset}
-    # difference_transitions_to_flat = visible_transitions - flat_set
-    # updated_unique_trans_list = list()
-    # if len(unique_trans_tuples) > 0:
-    #     for unique_trans_tupe in unique_trans_tuples:
-    #         unique_trans_set = set(unique_trans_tupe)
-    #         merged_set = unique_trans_set | difference_transitions_to_flat
-    #         updated_unique_trans_list.append(merged_set)
-    # else:
-        # updated_unique_trans_list.append(difference_transitions_to_flat)
-
-    new_runs = {}
-    # for idx, run in enumerate(updated_unique_trans_list):
-    #     new_run = set()
-    #     for node in run:
-    #         new_run.add(node)
-        
-    #     new_runs[f"run_{idx}"] = new_run
-
-    return new_runs
-
 def runs_and_inputs_factory(net, im, fm):
-    runs = find_runs2(net, im, fm)
+    runs = find_runs(net, im, fm)
     all_inputs_dict = {}
     for index, run in runs.items():
         inputs_dict = inputs(net, run)
@@ -528,7 +337,6 @@ def get_job_application_from_label(task):
     task_label = task.label
     command = task_label.split('.')[0] if '.' in task_label else task_label
     return command.strip()
-
 
 def get_command_from_label(task):
     label = task.label
@@ -669,8 +477,6 @@ def output_and_input_files_factory(bpmn):
                         if job_task_id == target_ref_id:
                             job.add_input_file_by_job_id(job_id, data_obj_name)
 
-
-
 def first_polishing(bpmn):
     _nodes = bpmn.__dict__['_BPMN__nodes']
     _tasks = set()
@@ -684,10 +490,19 @@ def first_polishing(bpmn):
             pass
         else:
             JOB.remove_job_by_id(job.get_job_id())
-            
+
+def return_flow_annotaion(_flows_details, ___flow):
+    flow_annotaion = ''
+    for _flow_details_id in _flows_details:
+        _flow_details = _flows_details[_flow_details_id]
+        if _flow_details['target_ref'] == ___flow.target.id:
+            flow_annotaion = _flow_details['name']
+
+    return flow_annotaion
+
 def find_previous_nodes(node, bpmn, previous_nodes):
     _flows = bpmn.__dict__['_BPMN__flows']
-
+    _flows_details = bpmn.__dict__["_BPMN__flows_details"]
     for _flow in _flows:
         if _flow.target == node:
             if isinstance(_flow.source, BPMN.Task):
@@ -696,32 +511,34 @@ def find_previous_nodes(node, bpmn, previous_nodes):
             else:
                 if isinstance(_flow.source, BPMN.ParallelGateway):
                     find_previous_nodes(_flow.source, bpmn, previous_nodes)
+                elif isinstance(_flow.source, BPMN.ExclusiveGateway):
+                    for ___flow in _flows:
+                        the_exclusive_gateway = _flow.source
+                        if ___flow.target == the_exclusive_gateway:
+                            flow_annotaion = return_flow_annotaion(_flows_details, ___flow)
+                            if flow_annotaion:
+                                print("we never come here .... ")
+                            else:
+                                find_previous_nodes(the_exclusive_gateway, bpmn, previous_nodes)
                 else:
-                    if isinstance(_flow.source, BPMN.ExclusiveGateway):
-                        print("_flow.source: ", _flow.source, type(_flow.source))
-                    else:
-                        pass
+                    pass
                     
-
+                    
     return previous_nodes
 
-def update_inputs_for_choice_tasks(connected_jobs, bpmn):
-    
+def update_inputs_for_choice_tasks(bpmn):
     for job in JOB.get_all_jobs():
         if job.get_choice_flag():
             choice_node_id = job.get_job_id()
             choice_node = job.get_task()
-            previous_nodes = set()
+            previous_nodes=set()
             find_previous_nodes(choice_node, bpmn, previous_nodes)
-            for sublist in connected_jobs:
-                if choice_node_id in sublist:
-                    connected_job_ids = sublist
             
-            for connected_job in connected_job_ids:
-                connected_job_output_file = JOB.get_output_file_by_job_id(connected_job)
-                if len(connected_job_output_file) > 0:
-                    if connected_job_output_file[0]:
-                        JOB.add_input_file_by_job_id(choice_node_id, connected_job_output_file[0])
+            for previous_node in previous_nodes:
+                output_file = JOB.get_output_file_by_task(previous_node)
+                if len(output_file)>0:
+                    if output_file[0]:
+                        JOB.add_input_file_by_job_id(choice_node_id, output_file[0])
 
 def create(petri_net, im, fm, bpmn):
     runs, all_inputs_dict = runs_and_inputs_factory(petri_net, im, fm)
@@ -732,21 +549,6 @@ def create(petri_net, im, fm, bpmn):
 
     output_and_input_files_factory(bpmn)
     first_polishing(bpmn)
-    connected_jobs = find_connected_jobs(runs , bpmn)
-    update_inputs_for_choice_tasks(connected_jobs, bpmn)
+    update_inputs_for_choice_tasks(bpmn)
 
-    return depend_script, should_be_uploaded_list, connected_jobs
-
-def find_connected_jobs(runs, bpmn):
-    _nodes = bpmn.__dict__['_BPMN__nodes']
-    connected_jobs_list = list()
-    for run_key, run_value in runs.items():
-        connected_jobs = list()
-        for task in run_value:
-            for _node in _nodes:
-                if _node.id == task.name:
-                    node_job_id = JOB.get_job_id_by_task(_node)
-            connected_jobs.append(node_job_id)
-        connected_jobs_list.append(connected_jobs)
-
-    return connected_jobs_list
+    return depend_script, should_be_uploaded_list

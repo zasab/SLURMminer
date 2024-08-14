@@ -21,7 +21,7 @@ log = pm4py.read_xes(log_path)
 net, initial_marking, final_marking = pm4py.discover_petri_net_inductive(log, noise_threshold=noise_threshold)
 parameters = {pn_visualizer.Variants.FREQUENCY.value.Parameters.FORMAT: "png"}
 gviz = pn_visualizer.apply(net, initial_marking, final_marking, parameters=parameters, variant=pn_visualizer.Variants.FREQUENCY, log=log)
-model_path = file_path = os.path.join(script_dir, input_and_output_folder, f"inductive_frequency{noise_threshold}.png")
+model_path = os.path.join(script_dir, input_and_output_folder, f"inductive_frequency_{noise_threshold}_{os.path.basename(log_path).split('.')[0]}.png")
 pn_visualizer.save(gviz, model_path)
 
 #------------------------------------------------- outputs

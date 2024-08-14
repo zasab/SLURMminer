@@ -11,7 +11,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 inputs_dict, output_file, input_and_output_folder, script_arguments = command_parser.parse(script_dir)
 # #-------------------------------------------------
 log_path = inputs_dict['log_info']['log_path']
-noise_threshold = float(inputs_dict['model_info']['noise_threshold'])
+noise_threshold = float(inputs_dict['model_info1']['noise_threshold'])
 log = pm4py.read_xes(log_path)
 net, im, fm = pm4py.discover_petri_net_inductive(log, noise_threshold=noise_threshold)
 fitness_alignments = pm4py.fitness_alignments(log, net, im, fm)

@@ -291,6 +291,12 @@ def process_explicit_loops(bpmn_graph):
                     previous_new_node = new_activity
                     new_flows.add(flow_tuple3)
 
+            if rep_flow_random_value == 1:
+                for end_node in end_nodes:
+                    flow_tuple4 = (activity_with_loop, end_node)
+                    new_flows.add(flow_tuple4)
+
+
             for n_activity in new_activities:
                 bpmn_graph.add_node(n_activity)
 
@@ -400,7 +406,9 @@ def process_hidden_loops(bpmn_graph):
 
         affected_nodes_to_remove.add(start_of_loop)
         affected_nodes_to_remove.add(end_of_loop)
-        new_start = BPMN.ParallelGateway(start_of_loop.name)
+
+        new_start_name = 'S_AND__' + common_functions.generate_unique_hash(str(start_of_loop.id))
+        new_start = BPMN.ParallelGateway(name=new_start_name)
         
         correspondings3[start_of_loop] = {new_start}
         all_new_activities[new_start] = ""
@@ -409,7 +417,8 @@ def process_hidden_loops(bpmn_graph):
             # in_flow = BPMN.SequenceFlow(in_node, new_start)
             all_new_flows.add(new_tupplee1)
 
-        new_end = BPMN.ParallelGateway(end_of_loop.name)
+        new_end_name = 'E_AND__' + common_functions.generate_unique_hash(str(end_of_loop.id))
+        new_end = BPMN.ParallelGateway(name=new_end_name)
         correspondings3[end_of_loop] = {new_end}
         all_new_activities[new_end] = ""
         for out_node in outgoings:
@@ -443,7 +452,6 @@ def process_hidden_loops(bpmn_graph):
             all_new_flows.add(new_tupplee3)
             affected_nodes_to_remove.add(activity_with_iteration)
             replicate_sub_nodes(bpmn_graph, start_of_loop, {activity_with_iteration}, {new_activity}, flows, end_of_loop, new_end, all_new_activities, all_new_flows, affected_nodes_to_remove, affected_flows_to_remove, correspondings3, before_last_nodes)
-        
         
         before_last_nodes_corresponding = correspondings3[before_last_nodes[0]]
 
@@ -536,6 +544,7 @@ def replicate_sub_nodes(bpmn_graph, start_of_loop, initial_activities_that_are_g
 
                 affected_flows_to_remove.add(flow_i)
             else:
+                target_nodes = set()
                 before_last_nodes.append(flow_i.source)
     
     if target_nodes:
